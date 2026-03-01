@@ -63,7 +63,7 @@ function initDb() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
       name TEXT NOT NULL,
-      pillar_id INTEGER NOT NULL,
+      pillar_id INTEGER,
       target_per_week INTEGER NOT NULL,
       FOREIGN KEY (user_id) REFERENCES user(id),
       FOREIGN KEY (pillar_id) REFERENCES pillars(id)
