@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { api } from '../utils/api';
 import { PILLAR_BADGES, PILLAR_SHORT } from '../utils/constants';
 import { useToast } from '../context/ToastContext';
+import { CheckSquare, Plus, Check, Circle, Loader, Edit3, X, Clock, AlertCircle, Lightbulb } from 'lucide-react';
 
 const TYPES = ['all', 'daily', 'project', 'deadline'];
 const STATUSES = ['all', 'pending', 'in_progress', 'completed'];
@@ -28,9 +29,7 @@ export default function TasksPage() {
     loadTasks();
     api.get('/dashboard').then(d => setPillars(d.pillars || []));
     window.addEventListener('close-modal', closeModals);
-
     if (searchParams.get('new') === '1') setShowModal(true);
-
     return () => window.removeEventListener('close-modal', closeModals);
   }, []);
 
@@ -48,7 +47,6 @@ export default function TasksPage() {
       estimated_time: form.estimated_time ? parseInt(form.estimated_time) : null,
       deadline: form.deadline || null,
     };
-
     if (editTask) {
       await api.put(`/tasks/${editTask.id}`, payload);
       toast.success('Task updated');
@@ -65,7 +63,7 @@ export default function TasksPage() {
   const handleComplete = async () => {
     if (!reflection.trim()) return;
     await api.put(`/tasks/${reflectionModal.id}`, { status: 'completed', completion_reflection: reflection });
-    toast.success(`"${reflectionModal.title}" completed! 🎉`);
+    toast.success(`"${reflectionModal.title}" completed!`);
     setReflectionModal(null);
     setReflection('');
     loadTasks();
@@ -79,10 +77,7 @@ export default function TasksPage() {
 
   const openEdit = (task) => {
     setEditTask(task);
-    setForm({
-      title: task.title, type: task.type, pillar_id: task.pillar_id || '',
-      estimated_time: task.estimated_time || '', notes: task.notes || '', deadline: task.deadline || '',
-    });
+    setForm({ title: task.title, type: task.type, pillar_id: task.pillar_id || '', estimated_time: task.estimated_time || '', notes: task.notes || '', deadline: task.deadline || '' });
     setShowModal(true);
   };
 
@@ -98,10 +93,16 @@ export default function TasksPage() {
     pending: tasks.filter(t => t.status === 'pending').length,
   };
 
+  const StatusIcon = ({ status }) => {
+    if (status === 'completed') return <Check size={12} strokeWidth={2.5} />;
+    if (status === 'in_progress') return <Loader size={12} strokeWidth={2} />;
+    return <Circle size={12} strokeWidth={1.5} />;
+  };
+
   if (loading) {
     return (
       <div>
-        <div className="page-header"><h1>☐ Tasks</h1></div>
+        <div className="page-header"><h1><CheckSquare size={22} strokeWidth={1.8} /> Tasks</h1></div>
         {[1,2,3,4].map(i => <div key={i} className="skeleton skeleton-block" />)}
       </div>
     );
@@ -110,17 +111,16 @@ export default function TasksPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>☐ Tasks</h1>
+        <h1><CheckSquare size={22} strokeWidth={1.8} /> Tasks</h1>
         <button className="btn btn-primary" onClick={() => {
           setEditTask(null);
           setForm({ title: '', type: 'project', pillar_id: '', estimated_time: '', notes: '', deadline: '' });
           setShowModal(true);
         }}>
-          + New Task
+          <Plus size={15} /> New Task
         </button>
       </div>
 
-      {/* Stats */}
       <div className="grid-3 mb-6">
         <div className="stat-card">
           <div className="stat-value">{stats.total}</div>
@@ -136,7 +136,6 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="flex mb-6" style={{ gap: 6, flexWrap: 'wrap' }}>
         {TYPES.map(t => (
           <button key={t} className={`btn btn-sm ${filterType === t ? 'btn-primary' : 'btn-secondary'}`}
@@ -153,74 +152,67 @@ export default function TasksPage() {
         ))}
       </div>
 
-      {/* Task List */}
       <div className="flex flex-col" style={{ gap: 8 }}>
         {filtered.length === 0 && <p className="text-muted text-sm">No tasks match your filters.</p>}
         {filtered.map((task, i) => (
-          <div
-            key={task.id}
-            className="card"
-            style={{
-              padding: '14px 22px',
-              animation: `slideUp 0.25s ease ${i * 0.03}s forwards`,
-              opacity: 0,
-            }}
-          >
+          <div key={task.id} className="card" style={{ padding: '14px 22px', animation: `slideUp 0.25s ease ${i * 0.03}s forwards`, opacity: 0 }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center" style={{ gap: 10, flexWrap: 'wrap' }}>
                 <span className={`badge badge-status-${task.status}`}>
-                  {task.status === 'completed' ? '✓' : task.status === 'in_progress' ? '◉' : '○'} {task.status.replace('_', ' ')}
+                  <StatusIcon status={task.status} /> {task.status.replace('_', ' ')}
                 </span>
                 <span style={{ fontWeight: 600 }}>{task.title}</span>
                 {task.pillar_name && (
-                  <span className={`badge ${PILLAR_BADGES[task.pillar_name] || ''}`}>
-                    {PILLAR_SHORT[task.pillar_name]}
-                  </span>
+                  <span className={`badge ${PILLAR_BADGES[task.pillar_name] || ''}`}>{PILLAR_SHORT[task.pillar_name]}</span>
                 )}
                 <span className="text-sm text-muted">{task.type}</span>
                 {task.deadline && (
-                  <span className="text-sm font-mono" style={{ color: 'var(--accent-red)' }}>
-                    ⏰ {task.deadline}
+                  <span className="text-sm font-mono" style={{ color: 'var(--accent-red)', display: 'flex', alignItems: 'center', gap: 3 }}>
+                    <AlertCircle size={11} /> {task.deadline}
                   </span>
                 )}
                 {task.estimated_time && (
-                  <span className="text-sm text-muted font-mono">{task.estimated_time}m</span>
+                  <span className="text-sm text-muted font-mono" style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                    <Clock size={11} /> {task.estimated_time}m
+                  </span>
                 )}
               </div>
               <div className="flex" style={{ gap: 4, flexShrink: 0 }}>
                 {task.status !== 'completed' && (
                   <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-teal)' }}
                     onClick={() => { setReflectionModal(task); setReflection(''); }}>
-                    ✓
+                    <Check size={14} />
                   </button>
                 )}
-                <button className="btn btn-ghost btn-sm" onClick={() => openEdit(task)}>✎</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => openEdit(task)}>
+                  <Edit3 size={13} />
+                </button>
                 <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-red)' }}
-                  onClick={() => handleDelete(task.id)}>✕</button>
+                  onClick={() => handleDelete(task.id)}>
+                  <X size={14} />
+                </button>
               </div>
             </div>
             {task.notes && <p className="text-sm text-muted mt-4" style={{ paddingLeft: 4 }}>{task.notes}</p>}
             {task.completion_reflection && (
-              <p className="text-sm mt-4" style={{ color: 'var(--accent-teal)', paddingLeft: 4 }}>
-                💡 {task.completion_reflection}
+              <p className="text-sm mt-4" style={{ color: 'var(--accent-teal)', paddingLeft: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Lightbulb size={12} /> {task.completion_reflection}
               </p>
             )}
           </div>
         ))}
       </div>
 
-      {/* FAB */}
       <button className="fab" onClick={() => {
         setEditTask(null);
         setForm({ title: '', type: 'project', pillar_id: '', estimated_time: '', notes: '', deadline: '' });
         setShowModal(true);
-      }}>+</button>
+      }}><Plus size={22} /></button>
 
-      {/* Create/Edit Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h2>{editTask ? '✎ Edit Task' : '+ New Task'}</h2>
+            <h2>{editTask ? <><Edit3 size={18} /> Edit Task</> : <><Plus size={18} /> New Task</>}</h2>
             <div className="form-group">
               <label>Title</label>
               <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="What do you need to do?" autoFocus />
@@ -264,25 +256,19 @@ export default function TasksPage() {
         </div>
       )}
 
-      {/* Completion Reflection Modal */}
       {reflectionModal && (
         <div className="modal-overlay" onClick={() => setReflectionModal(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h2>🎉 Complete: {reflectionModal.title}</h2>
+            <h2><Check size={18} /> Complete: {reflectionModal.title}</h2>
             <p className="text-sm text-muted mb-6">Reflect on what you accomplished before marking this done.</p>
             <div className="form-group">
               <label>Completion Reflection *</label>
-              <textarea
-                value={reflection}
-                onChange={e => setReflection(e.target.value)}
-                placeholder="What did you learn? What went well? What would you do differently?"
-                autoFocus
-              />
+              <textarea value={reflection} onChange={e => setReflection(e.target.value)} placeholder="What did you learn? What went well?" autoFocus />
             </div>
             <div className="modal-actions">
               <button className="btn btn-secondary" onClick={() => setReflectionModal(null)}>Cancel</button>
               <button className="btn btn-primary" onClick={handleComplete} disabled={!reflection.trim()}>
-                ✓ Mark Complete
+                <Check size={14} /> Mark Complete
               </button>
             </div>
           </div>

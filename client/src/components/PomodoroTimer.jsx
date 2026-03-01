@@ -1,90 +1,103 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { Play, Pause, RotateCcw, Timer, Coffee, Brain, Zap } from 'lucide-react';
 
-const PRESETS = {
-  focus: { label: 'Focus', minutes: 25, color: 'var(--accent-purple)' },
-  short_break: { label: 'Break', minutes: 5, color: 'var(--accent-teal)' },
-  long_break: { label: 'Long Break', minutes: 15, color: 'var(--accent-orange)' },
-  deep: { label: 'Deep Work', minutes: 90, color: 'var(--accent-purple)' },
-};
+const PRESETS = [
+  { label: 'Focus', minutes: 25, icon: Zap, color: 'var(--accent-purple)' },
+  { label: 'Break', minutes: 5, icon: Coffee, color: 'var(--accent-teal)' },
+  { label: 'Long Break', minutes: 15, icon: Coffee, color: 'var(--accent-orange)' },
+  { label: 'Deep Work', minutes: 90, icon: Brain, color: 'var(--accent-red)' },
+];
 
 export default function PomodoroTimer() {
-  const [mode, setMode] = useState('focus');
-  const [totalSeconds, setTotalSeconds] = useState(25 * 60);
-  const [remaining, setRemaining] = useState(25 * 60);
+  const [preset, setPreset] = useState(0);
+  const [seconds, setSeconds] = useState(PRESETS[0].minutes * 60);
   const [running, setRunning] = useState(false);
   const [sessions, setSessions] = useState(0);
   const intervalRef = useRef(null);
 
-  const preset = PRESETS[mode];
-
-  const switchMode = useCallback((m) => {
-    setMode(m);
-    const secs = PRESETS[m].minutes * 60;
-    setTotalSeconds(secs);
-    setRemaining(secs);
+  const reset = useCallback((presetIndex) => {
     setRunning(false);
-    if (intervalRef.current) clearInterval(intervalRef.current);
-  }, []);
+    clearInterval(intervalRef.current);
+    setSeconds(PRESETS[presetIndex ?? preset].minutes * 60);
+  }, [preset]);
 
   useEffect(() => {
-    if (running && remaining > 0) {
+    if (running) {
       intervalRef.current = setInterval(() => {
-        setRemaining(r => {
-          if (r <= 1) {
+        setSeconds(s => {
+          if (s <= 1) {
             clearInterval(intervalRef.current);
             setRunning(false);
-            if (mode === 'focus' || mode === 'deep') {
-              setSessions(s => s + 1);
+            setSessions(prev => prev + 1);
+            if (Notification.permission === 'granted') {
+              new Notification('Timer Complete', { body: `${PRESETS[preset].label} session done!` });
             }
-            // Play a subtle notification sound would go here
             return 0;
           }
-          return r - 1;
+          return s - 1;
         });
       }, 1000);
     }
     return () => clearInterval(intervalRef.current);
-  }, [running, mode]);
+  }, [running, preset]);
 
-  const toggle = () => setRunning(!running);
-  const reset = () => { setRunning(false); setRemaining(totalSeconds); };
+  const selectPreset = (i) => {
+    setPreset(i);
+    setRunning(false);
+    clearInterval(intervalRef.current);
+    setSeconds(PRESETS[i].minutes * 60);
+  };
 
-  const mins = Math.floor(remaining / 60);
-  const secs = remaining % 60;
-  const progress = totalSeconds > 0 ? ((totalSeconds - remaining) / totalSeconds) * 100 : 0;
+  const totalSeconds = PRESETS[preset].minutes * 60;
+  const progress = ((totalSeconds - seconds) / totalSeconds) * 100;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  const ActiveIcon = PRESETS[preset].icon;
 
   return (
-    <div className="pomodoro-widget">
-      <div className="pomodoro-label">{preset.label} Session</div>
-      <div className={`pomodoro-time ${running ? 'running' : remaining < totalSeconds ? 'paused' : ''}`}>
-        {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
+    <div className="card pomodoro-card">
+      <div className="pomodoro-header">
+        <ActiveIcon size={16} strokeWidth={1.8} style={{ color: PRESETS[preset].color }} />
+        <span className="pomodoro-label">{PRESETS[preset].label} Session</span>
+        {sessions > 0 && <span className="pomodoro-sessions">{sessions} done</span>}
       </div>
-      <div className="pomodoro-progress">
-        <div
-          className="pomodoro-progress-bar"
-          style={{ width: `${progress}%`, background: preset.color }}
-        />
+
+      <div className="pomodoro-display">
+        <span className="pomodoro-time">
+          {String(mins).padStart(2, '0')}<span className="pomodoro-colon">:</span>{String(secs).padStart(2, '0')}
+        </span>
       </div>
+
+      <div className="pomodoro-progress-track">
+        <div className="pomodoro-progress-bar" style={{ width: `${progress}%`, background: PRESETS[preset].color }} />
+      </div>
+
       <div className="pomodoro-controls">
-        <button className="btn btn-sm btn-primary" onClick={toggle}>
-          {running ? '⏸ Pause' : remaining < totalSeconds ? '▶ Resume' : '▶ Start'}
+        <button className="btn btn-primary btn-sm" onClick={() => setRunning(!running)} style={{ background: PRESETS[preset].color, borderColor: PRESETS[preset].color }}>
+          {running ? <Pause size={14} /> : <Play size={14} />}
+          <span>{running ? 'Pause' : 'Start'}</span>
         </button>
-        <button className="btn btn-sm btn-secondary" onClick={reset}>↺ Reset</button>
+        <button className="btn btn-secondary btn-sm" onClick={() => reset()}>
+          <RotateCcw size={14} />
+          <span>Reset</span>
+        </button>
       </div>
-      <div className="flex" style={{ gap: 6, justifyContent: 'center', marginTop: 14 }}>
-        {Object.entries(PRESETS).map(([key, p]) => (
-          <button
-            key={key}
-            className={`btn btn-sm ${mode === key ? 'btn-primary' : 'btn-ghost'}`}
-            onClick={() => switchMode(key)}
-            style={{ fontSize: '0.72rem', padding: '4px 10px' }}
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
-      <div className="text-muted text-sm" style={{ marginTop: 10 }}>
-        Sessions today: <strong style={{ color: 'var(--accent-teal)' }}>{sessions}</strong>
+
+      <div className="pomodoro-presets">
+        {PRESETS.map((p, i) => {
+          const Icon = p.icon;
+          return (
+            <button
+              key={i}
+              className={`pomodoro-preset-btn ${preset === i ? 'active' : ''}`}
+              onClick={() => selectPreset(i)}
+              style={preset === i ? { borderColor: p.color, color: p.color } : {}}
+            >
+              <Icon size={12} />
+              <span>{p.label}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

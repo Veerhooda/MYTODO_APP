@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { PILLAR_BADGES, PILLAR_SHORT, PILLAR_COLORS } from '../utils/constants';
 import PomodoroTimer from '../components/PomodoroTimer';
+import { Maximize, Clock, Flame, CalendarClock, Activity, Blocks, TrendingUp, Zap, ChevronRight, Quote } from 'lucide-react';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -22,6 +23,7 @@ function LiveClock() {
   const timeStr = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   return (
     <div className="greeting-time">
+      <Clock size={13} strokeWidth={1.5} style={{ opacity: 0.5 }} />
       {time.toLocaleDateString('en-US', opts)} · {timeStr}
     </div>
   );
@@ -75,7 +77,7 @@ export default function DashboardPage({ onFocusMode }) {
       <div className="greeting-section">
         <LiveClock />
         <div className="greeting-text">
-          {getGreeting()}, <span>Veer</span> 👋
+          {getGreeting()}, <span>Veer</span>
         </div>
       </div>
 
@@ -98,15 +100,15 @@ export default function DashboardPage({ onFocusMode }) {
       </div>
       <div className="grid-3 mb-8">
         <div className="focus-card primary">
-          <span className="focus-label">⚡ Primary</span>
+          <span className="focus-label"><Zap size={13} /> Primary</span>
           <span className="focus-name">{rotation.primary}</span>
         </div>
         <div className="focus-card secondary">
-          <span className="focus-label">▸ Secondary</span>
+          <span className="focus-label"><ChevronRight size={13} /> Secondary</span>
           <span className="focus-name">{rotation.secondary}</span>
         </div>
         <div className="focus-card maintenance">
-          <span className="focus-label">· Maintenance</span>
+          <span className="focus-label"><Activity size={13} /> Maintenance</span>
           <span className="focus-name">{rotation.maintenance?.join(' + ')}</span>
         </div>
       </div>
@@ -114,18 +116,22 @@ export default function DashboardPage({ onFocusMode }) {
       {/* Stats Row */}
       <div className="grid-4 mb-8">
         <div className="stat-card">
+          <Blocks size={18} strokeWidth={1.5} style={{ color: 'var(--accent-purple)', marginBottom: 8 }} />
           <div className="stat-value">{blocks.length}</div>
           <div className="stat-label">Today's Blocks</div>
         </div>
         <div className="stat-card">
+          <Flame size={18} strokeWidth={1.5} style={{ color: 'var(--accent-orange)', marginBottom: 8 }} />
           <div className="stat-value">{streaks.reduce((max, s) => Math.max(max, s.streak), 0)}</div>
           <div className="stat-label">Best Streak</div>
         </div>
         <div className="stat-card">
+          <CalendarClock size={18} strokeWidth={1.5} style={{ color: 'var(--accent-red)', marginBottom: 8 }} />
           <div className="stat-value">{deadlines.length}</div>
           <div className="stat-label">Deadlines</div>
         </div>
         <div className="stat-card">
+          <TrendingUp size={18} strokeWidth={1.5} style={{ color: 'var(--accent-teal)', marginBottom: 8 }} />
           <div className="stat-value" style={{ color: 'var(--accent-teal)' }}>{analyticsData?.deepWorkPct || 0}%</div>
           <div className="stat-label">Deep Work Rate</div>
         </div>
@@ -134,7 +140,6 @@ export default function DashboardPage({ onFocusMode }) {
       <div className="grid-2 mb-8" style={{ gridTemplateColumns: '1fr 320px' }}>
         {/* Left: Today's Blocks + Streaks */}
         <div>
-          {/* Today's Blocks */}
           <h4 className="mb-4">TODAY'S WORK BLOCKS</h4>
           <div className="mb-6">
             {blocks.length === 0 ? (
@@ -161,26 +166,29 @@ export default function DashboardPage({ onFocusMode }) {
               ))
             )}
             <button className="btn btn-ghost btn-sm mt-4" onClick={onFocusMode} style={{ color: 'var(--accent-purple)' }}>
-              ◉ Enter Focus Mode
+              <Maximize size={13} /> Enter Focus Mode
             </button>
           </div>
 
-          {/* Streaks + Deadlines */}
           <div className="grid-2" style={{ gap: 16 }}>
             <div className="card">
-              <div className="card-header"><h3>🔥 Streaks</h3></div>
+              <div className="card-header">
+                <h3><Flame size={15} style={{ color: 'var(--accent-orange)' }} /> Streaks</h3>
+              </div>
               {streaks.map(s => (
                 <div key={s.id} className="flex items-center justify-between mb-4" style={{ gap: 12 }}>
                   <span className="text-sm" style={{ fontWeight: 500 }}>{s.name}</span>
                   <span className="streak-badge">
-                    <span className="fire">🔥</span> {s.streak}
+                    <Flame size={12} style={{ color: 'var(--accent-orange)' }} /> {s.streak}
                   </span>
                 </div>
               ))}
             </div>
 
             <div className="card">
-              <div className="card-header"><h3>📅 Deadlines</h3></div>
+              <div className="card-header">
+                <h3><CalendarClock size={15} style={{ color: 'var(--accent-red)' }} /> Deadlines</h3>
+              </div>
               {deadlines.length === 0 ? (
                 <p className="text-muted text-sm">No upcoming deadlines</p>
               ) : (
@@ -203,7 +211,6 @@ export default function DashboardPage({ onFocusMode }) {
           <h4 className="mb-4">POMODORO TIMER</h4>
           <PomodoroTimer />
 
-          {/* Pillar Hours this week */}
           {analyticsData?.hoursPerPillar && (
             <div className="card mt-6" style={{ padding: '18px 22px' }}>
               <h4 className="mb-4">HOURS THIS WEEK</h4>
@@ -235,6 +242,7 @@ export default function DashboardPage({ onFocusMode }) {
       {/* Quote */}
       {quote && (
         <div className="quote-block">
+          <Quote size={20} strokeWidth={1.2} className="quote-icon" />
           <p className="quote-text">{quote.text}</p>
           <p className="quote-author">— {quote.author}</p>
         </div>

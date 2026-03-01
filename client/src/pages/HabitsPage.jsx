@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { PILLAR_BADGES, PILLAR_SHORT, DAYS, formatDate } from '../utils/constants';
 import { useToast } from '../context/ToastContext';
+import { Flame, Check, Sparkles, TrendingUp } from 'lucide-react';
 
 export default function HabitsPage() {
   const [habits, setHabits] = useState([]);
@@ -24,7 +25,7 @@ export default function HabitsPage() {
   const handleLog = async () => {
     if (!note.trim()) return;
     await api.post(`/habits/${logModal.id}/log`, { date: today, done_condition_note: note });
-    toast.success(`${logModal.name} marked complete! 🎯`);
+    toast.success(`${logModal.name} marked complete!`);
     setLogModal(null);
     setNote('');
     loadHabits();
@@ -46,7 +47,7 @@ export default function HabitsPage() {
   if (loading) {
     return (
       <div>
-        <div className="page-header"><h1>✦ Habit Tracker</h1></div>
+        <div className="page-header"><h1><Sparkles size={22} strokeWidth={1.8} /> Habit Tracker</h1></div>
         <div className="grid-2">
           {[1,2,3,4].map(i => <div key={i} className="skeleton skeleton-card" style={{ height: 200 }} />)}
         </div>
@@ -57,7 +58,7 @@ export default function HabitsPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>✦ Habit Tracker</h1>
+        <h1><Sparkles size={22} strokeWidth={1.8} /> Habit Tracker</h1>
         <div className="flex items-center" style={{ gap: 8 }}>
           <span className="text-sm text-muted">
             {habits.reduce((s, h) => s + h.completedThisWeek, 0)} / {habits.reduce((s, h) => s + h.target_per_week, 0)} this week
@@ -80,7 +81,7 @@ export default function HabitsPage() {
                 </span>
               </div>
               <span className="streak-badge">
-                <span className="fire">🔥</span> {habit.streak}
+                <Flame size={13} style={{ color: 'var(--accent-orange)' }} /> {habit.streak}
               </span>
             </div>
 
@@ -93,7 +94,6 @@ export default function HabitsPage() {
               </span>
             </div>
 
-            {/* Progress bar */}
             <div style={{ height: 4, background: 'var(--bg-tertiary)', borderRadius: 2, marginBottom: 14, overflow: 'hidden' }}>
               <div style={{
                 width: `${Math.min((habit.completedThisWeek / habit.target_per_week) * 100, 100)}%`,
@@ -120,7 +120,7 @@ export default function HabitsPage() {
                       }
                     }}
                   >
-                    {log?.completed ? '✓' : day.label.charAt(0)}
+                    {log?.completed ? <Check size={10} strokeWidth={3} /> : day.label.charAt(0)}
                   </div>
                 );
               })}
@@ -128,11 +128,8 @@ export default function HabitsPage() {
 
             {habit.completedThisWeek < habit.target_per_week && (
               <div className="mt-4">
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={() => { setLogModal(habit); setNote(''); }}
-                >
-                  ✓ Mark Today
+                <button className="btn btn-primary btn-sm" onClick={() => { setLogModal(habit); setNote(''); }}>
+                  <Check size={13} /> Mark Today
                 </button>
               </div>
             )}
@@ -143,7 +140,7 @@ export default function HabitsPage() {
       {logModal && (
         <div className="modal-overlay" onClick={() => setLogModal(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h2>✦ Complete: {logModal.name}</h2>
+            <h2><Sparkles size={18} /> Complete: {logModal.name}</h2>
             <p className="text-sm text-muted mb-6">
               Describe what you accomplished to mark this habit as complete today.
             </p>
@@ -159,7 +156,7 @@ export default function HabitsPage() {
             <div className="modal-actions">
               <button className="btn btn-secondary" onClick={() => setLogModal(null)}>Cancel</button>
               <button className="btn btn-primary" onClick={handleLog} disabled={!note.trim()}>
-                Mark Complete
+                <Check size={14} /> Mark Complete
               </button>
             </div>
           </div>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { api } from '../utils/api';
 import { DAYS, TIME_SLOTS, getMonday, formatDate, addDays } from '../utils/constants';
 import { useToast } from '../context/ToastContext';
+import { CalendarDays, Plus, ChevronLeft, ChevronRight, Zap, GripVertical, Check, X, Edit3 } from 'lucide-react';
 
 export default function CalendarPage() {
   const [weekStart, setWeekStart] = useState(() => formatDate(getMonday(new Date())));
@@ -28,7 +29,6 @@ export default function CalendarPage() {
   }, [weekStart, weekEnd]);
 
   useEffect(() => { loadBlocks(); }, [loadBlocks]);
-
   useEffect(() => {
     api.get('/dashboard').then(d => setPillars(d.pillars || []));
   }, []);
@@ -39,14 +39,14 @@ export default function CalendarPage() {
   const generateBlocks = async () => {
     const rotation = await api.get('/rotation');
     await api.post('/blocks/generate', { week_start: weekStart, rotation });
-    toast.success('Blocks generated for the week! 📅');
+    toast.success('Blocks generated for the week!');
     loadBlocks();
   };
 
   const toggleStatus = async (block) => {
     const newStatus = block.status === 'completed' ? 'pending' : 'completed';
     await api.put(`/blocks/${block.id}`, { status: newStatus });
-    if (newStatus === 'completed') toast.success('Block completed ✓');
+    if (newStatus === 'completed') toast.success('Block completed');
     loadBlocks();
   };
 
@@ -77,31 +77,19 @@ export default function CalendarPage() {
   const openEditModal = (block, e) => {
     e.stopPropagation();
     setEditBlock(block);
-    setForm({
-      task_title: block.task_title,
-      pillar_id: block.pillar_id || '',
-      start_time: block.start_time,
-      duration: block.duration,
-      date: block.date,
-    });
+    setForm({ task_title: block.task_title, pillar_id: block.pillar_id || '', start_time: block.start_time, duration: block.duration, date: block.date });
     setShowModal(true);
   };
 
   const handleSave = async () => {
     if (!form.task_title.trim()) return;
-    const payload = {
-      ...form,
-      pillar_id: form.pillar_id ? parseInt(form.pillar_id) : null,
-      duration: parseInt(form.duration),
-      block_number: blocks.filter(b => b.date === form.date).length + 1,
-    };
-
+    const payload = { ...form, pillar_id: form.pillar_id ? parseInt(form.pillar_id) : null, duration: parseInt(form.duration), block_number: blocks.filter(b => b.date === form.date).length + 1 };
     if (editBlock) {
       await api.put(`/blocks/${editBlock.id}`, payload);
-      toast.success('Block updated ✓');
+      toast.success('Block updated');
     } else {
       await api.post('/blocks', payload);
-      toast.success('Block created ✓');
+      toast.success('Block created');
     }
     setShowModal(false);
     loadBlocks();
@@ -125,7 +113,6 @@ export default function CalendarPage() {
   });
 
   const weekDates = Array.from({ length: 7 }, (_, i) => formatDate(addDays(new Date(weekStart), i)));
-
   const completedCount = blocks.filter(b => b.status === 'completed').length;
   const totalCount = blocks.length;
 
@@ -134,27 +121,27 @@ export default function CalendarPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>▦ Weekly Planner</h1>
+        <h1><CalendarDays size={22} strokeWidth={1.8} /> Weekly Planner</h1>
         <div className="flex" style={{ gap: 8 }}>
-          <button className="btn btn-secondary btn-sm" onClick={prevWeek}>← Prev</button>
+          <button className="btn btn-secondary btn-sm" onClick={prevWeek}><ChevronLeft size={14} /></button>
           <button className="btn btn-secondary btn-sm" onClick={() => setWeekStart(formatDate(getMonday(new Date())))}>Today</button>
-          <button className="btn btn-secondary btn-sm" onClick={nextWeek}>Next →</button>
+          <button className="btn btn-secondary btn-sm" onClick={nextWeek}><ChevronRight size={14} /></button>
           <button className="btn btn-primary btn-sm" onClick={() => {
             setEditBlock(null);
             setForm({ task_title: '', pillar_id: '', start_time: '09:00', duration: 60, date: today });
             setShowModal(true);
-          }}>+ New Block</button>
-          <button className="btn btn-secondary btn-sm" onClick={generateBlocks}>⚡ Generate</button>
+          }}><Plus size={14} /> New Block</button>
+          <button className="btn btn-secondary btn-sm" onClick={generateBlocks}><Zap size={14} /> Generate</button>
         </div>
       </div>
 
       <div className="flex items-center justify-between mb-6">
         <div className="text-sm text-muted">
-          Week of <span className="font-mono" style={{ color: 'var(--text-primary)' }}>{weekStart}</span> · Click empty cell to add · Drag to reschedule · Right-click to edit
+          Week of <span className="font-mono" style={{ color: 'var(--text-primary)' }}>{weekStart}</span> · Click cell to add · Drag to move · Right-click to edit
         </div>
         {totalCount > 0 && (
           <div className="text-sm font-mono" style={{ color: 'var(--accent-teal)' }}>
-            {completedCount}/{totalCount} completed
+            <Check size={12} /> {completedCount}/{totalCount} completed
           </div>
         )}
       </div>
@@ -177,19 +164,14 @@ export default function CalendarPage() {
             {Array.from({ length: 7 }, (_, dayIndex) => {
               const cellBlocks = getBlocksAt(dayIndex, time);
               return (
-                <div
-                  key={dayIndex}
-                  className="calendar-cell"
+                <div key={dayIndex} className="calendar-cell"
                   onDrop={(e) => handleDrop(e, dayIndex, time)}
                   onDragOver={handleDragOver}
-                  onClick={() => {
-                    if (cellBlocks.length === 0) openCreateModal(dayIndex, time);
-                  }}
+                  onClick={() => { if (cellBlocks.length === 0) openCreateModal(dayIndex, time); }}
                   style={{ cursor: cellBlocks.length === 0 ? 'pointer' : 'default' }}
                 >
                   {cellBlocks.map(block => (
-                    <div
-                      key={block.id}
+                    <div key={block.id}
                       className={`time-block-card ${block.status}`}
                       style={{ borderLeftColor: block.pillar_color || '#7c6fff' }}
                       draggable
@@ -200,12 +182,10 @@ export default function CalendarPage() {
                       <div className="block-title">{block.task_title}</div>
                       <div className="block-meta">
                         {block.duration}m · {block.pillar_name || 'General'}
-                        <button
-                          className="btn-icon"
-                          onClick={(e) => handleDelete(block, e)}
-                          style={{ width: 18, height: 18, fontSize: '0.6rem', color: 'var(--accent-red)', marginLeft: 4, opacity: 0.5 }}
-                          title="Delete block"
-                        >✕</button>
+                        <button className="btn-icon" onClick={(e) => handleDelete(block, e)}
+                          style={{ width: 16, height: 16, fontSize: '0.55rem', color: 'var(--accent-red)', marginLeft: 4, opacity: 0.4 }}>
+                          <X size={10} />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -216,22 +196,14 @@ export default function CalendarPage() {
         ))}
       </div>
 
-      {/* Create/Edit Block Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h2>{editBlock ? '✎ Edit Block' : '+ New Time Block'}</h2>
-
+            <h2>{editBlock ? <><Edit3 size={18} /> Edit Block</> : <><Plus size={18} /> New Time Block</>}</h2>
             <div className="form-group">
               <label>Task Title</label>
-              <input
-                value={form.task_title}
-                onChange={e => setForm({ ...form, task_title: e.target.value })}
-                placeholder="e.g., DSA Practice, System Design, CS50 Problem Set..."
-                autoFocus
-              />
+              <input value={form.task_title} onChange={e => setForm({ ...form, task_title: e.target.value })} placeholder="e.g., DSA Practice, System Design..." autoFocus />
             </div>
-
             <div className="grid-2">
               <div className="form-group">
                 <label>Pillar</label>
@@ -245,7 +217,6 @@ export default function CalendarPage() {
                 <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
               </div>
             </div>
-
             <div className="grid-2">
               <div className="form-group">
                 <label>Start Time</label>
@@ -257,19 +228,14 @@ export default function CalendarPage() {
                 <label>Duration</label>
                 <div className="flex" style={{ gap: 4, flexWrap: 'wrap' }}>
                   {DURATIONS.map(d => (
-                    <button
-                      key={d}
-                      className={`btn btn-sm ${form.duration === d ? 'btn-primary' : 'btn-secondary'}`}
-                      onClick={() => setForm({ ...form, duration: d })}
-                      style={{ minWidth: 42, fontSize: '0.75rem' }}
-                    >
+                    <button key={d} className={`btn btn-sm ${form.duration === d ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => setForm({ ...form, duration: d })} style={{ minWidth: 42, fontSize: '0.75rem' }}>
                       {d}m
                     </button>
                   ))}
                 </div>
               </div>
             </div>
-
             <div className="modal-actions">
               <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
               <button className="btn btn-primary" onClick={handleSave} disabled={!form.task_title.trim()}>

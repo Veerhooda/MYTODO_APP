@@ -1,180 +1,153 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import ProgressRing from '../components/ProgressRing';
+import { BarChart3, Clock, Sparkles, TrendingUp, AlertTriangle, Flame } from 'lucide-react';
 
 export default function AnalyticsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/analytics').then(d => { setData(d); setLoading(false); });
+    api.get('/analytics').then(d => { setData(d); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
   if (loading) {
     return (
       <div>
-        <div className="page-header"><h1>▤ Analytics</h1></div>
-        <div className="grid-2 mb-6">
-          <div className="skeleton skeleton-card" style={{ height: 280 }} />
-          <div className="skeleton skeleton-card" style={{ height: 280 }} />
-        </div>
-        <div className="grid-2">
-          <div className="skeleton skeleton-card" style={{ height: 200 }} />
-          <div className="skeleton skeleton-card" style={{ height: 200 }} />
-        </div>
+        <div className="page-header"><h1><BarChart3 size={22} strokeWidth={1.8} /> Analytics</h1></div>
+        <div className="grid-4 mb-6">{[1,2,3,4].map(i => <div key={i} className="skeleton skeleton-block" />)}</div>
+        <div className="grid-2">{[1,2].map(i => <div key={i} className="skeleton skeleton-card" style={{ height: 280 }} />)}</div>
       </div>
     );
   }
 
   if (!data) return <div className="text-muted">Failed to load analytics.</div>;
 
-  const { hoursPerPillar, streakData, deepWorkPct, trends, burnoutRisk } = data;
-  const maxHours = Math.max(...hoursPerPillar.map(h => h.hours), 1);
-  const totalHours = hoursPerPillar.reduce((s, h) => s + h.hours, 0);
+  const { hoursPerPillar, deepWorkPct, streakGraph, consistencyTrend, burnoutRisk } = data;
+  const maxHours = Math.max(...(hoursPerPillar || []).map(p => p.hours), 1);
 
   return (
     <div>
       <div className="page-header">
-        <h1>▤ Analytics</h1>
-      </div>
-
-      {/* Burnout Risk */}
-      <div className={`burnout-indicator ${burnoutRisk ? 'risk' : 'safe'} mb-6`}>
-        <div className="burnout-dot" />
-        <div>
-          <div style={{ fontWeight: 700, fontSize: '0.92rem', color: burnoutRisk ? 'var(--accent-red)' : 'var(--accent-teal)' }}>
-            {burnoutRisk ? '⚠ Burnout Risk Detected' : '✓ System Status: Healthy'}
-          </div>
-          <div className="text-sm text-muted">
-            {burnoutRisk
-              ? 'Completion below 50% for 5+ consecutive days. Consider reducing scope or taking a recovery day.'
-              : 'All systems operational. Completion rates within healthy bounds.'}
-          </div>
-        </div>
+        <h1><BarChart3 size={22} strokeWidth={1.8} /> Analytics</h1>
       </div>
 
       {/* Summary Stats */}
       <div className="grid-4 mb-8">
         <div className="stat-card">
-          <div className="stat-value">{totalHours}h</div>
-          <div className="stat-label">Total This Week</div>
+          <Clock size={16} strokeWidth={1.5} style={{ color: 'var(--accent-teal)', marginBottom: 6 }} />
+          <div className="stat-value">{hoursPerPillar?.reduce((s, p) => s + p.hours, 0).toFixed(1) || 0}h</div>
+          <div className="stat-label">Total Hours</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value" style={{ color: deepWorkPct >= 70 ? 'var(--accent-teal)' : deepWorkPct >= 40 ? 'var(--accent-orange)' : 'var(--accent-red)' }}>{deepWorkPct}%</div>
-          <div className="stat-label">Deep Work Rate</div>
+          <TrendingUp size={16} strokeWidth={1.5} style={{ color: 'var(--accent-purple)', marginBottom: 6 }} />
+          <div className="stat-value" style={{ color: 'var(--accent-teal)' }}>{deepWorkPct || 0}%</div>
+          <div className="stat-label">Deep Work Completion</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value">{trends[trends.length - 1]?.completion_pct || 0}%</div>
-          <div className="stat-label">This Week Focus</div>
+          <Flame size={16} strokeWidth={1.5} style={{ color: 'var(--accent-orange)', marginBottom: 6 }} />
+          <div className="stat-value">{streakGraph?.reduce((max, s) => Math.max(max, s.streak), 0) || 0}</div>
+          <div className="stat-label">Top Streak</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value" style={{ color: burnoutRisk ? 'var(--accent-red)' : 'var(--accent-teal)' }}>
-            {burnoutRisk ? '⚠' : '✓'}
+          <AlertTriangle size={16} strokeWidth={1.5} style={{ color: burnoutRisk === 'low' ? 'var(--accent-teal)' : burnoutRisk === 'medium' ? 'var(--accent-orange)' : 'var(--accent-red)', marginBottom: 6 }} />
+          <div className="stat-value" style={{ color: burnoutRisk === 'low' ? 'var(--accent-teal)' : burnoutRisk === 'medium' ? 'var(--accent-orange)' : 'var(--accent-red)', fontSize: '1.2rem' }}>
+            {burnoutRisk === 'low' ? 'Low' : burnoutRisk === 'medium' ? 'Medium' : 'High'}
           </div>
-          <div className="stat-label">Health Status</div>
+          <div className="stat-label">Burnout Risk</div>
         </div>
       </div>
 
       <div className="grid-2 mb-8">
-        {/* Hours per Pillar */}
-        <div className="card">
-          <div className="card-header"><h3>Hours Per Pillar</h3><span className="text-sm text-muted">This Week</span></div>
-          <div className="bar-chart">
-            {hoursPerPillar.map((item, i) => (
-              <div key={item.name} className="bar-item" style={{ animation: `slideUp 0.4s ease ${i * 0.1}s forwards`, opacity: 0 }}>
-                <div className="bar-value">{item.hours}h</div>
-                <div className="bar" style={{
-                  height: `${Math.max((item.hours / maxHours) * 140, 4)}px`,
-                  background: `linear-gradient(180deg, ${item.color}, ${item.color}88)`,
-                }} />
-                <div className="bar-label">{item.name.split(' ')[0]}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Deep Work Ring */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <h3 className="mb-6">Deep Work Completion</h3>
-          <ProgressRing
-            size={160}
-            stroke={12}
-            progress={deepWorkPct}
-            color={deepWorkPct >= 70 ? '#00e4b8' : deepWorkPct >= 40 ? '#ffaa55' : '#ff5c6c'}
-          />
-          <p className="text-sm text-muted mt-6">of scheduled blocks completed this week</p>
-        </div>
-      </div>
-
-      <div className="grid-2 mb-8">
-        {/* Streak Heatmap */}
-        <div className="card">
-          <div className="card-header">
-            <h3>Habit Activity</h3>
-            <span className="text-sm text-muted">Last 12 Weeks</span>
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <div className="heatmap" style={{ gridTemplateColumns: `repeat(${12 * 7}, 1fr)` }}>
-              {(() => {
-                const cells = [];
-                const now = new Date();
-                for (let i = 12 * 7 - 1; i >= 0; i--) {
-                  const d = new Date(now);
-                  d.setDate(now.getDate() - i);
-                  const dateStr = d.toISOString().split('T')[0];
-                  const found = streakData.find(s => s.date === dateStr);
-                  const count = found ? found.completions : 0;
-                  const level = count === 0 ? '' : count <= 1 ? 'level-1' : count <= 2 ? 'level-2' : count <= 3 ? 'level-3' : 'level-4';
-                  cells.push(
-                    <div key={dateStr} className={`heatmap-cell ${level}`} title={`${dateStr}: ${count} completions`} />
-                  );
-                }
-                return cells;
-              })()}
-            </div>
-          </div>
-          <div className="flex items-center justify-between mt-4 text-sm text-muted">
-            <span>12 weeks ago</span>
-            <div className="flex items-center" style={{ gap: 4 }}>
-              <span style={{ fontSize: '0.7rem' }}>Less</span>
-              <div className="heatmap-cell" style={{ width: 10, height: 10 }} />
-              <div className="heatmap-cell level-1" style={{ width: 10, height: 10 }} />
-              <div className="heatmap-cell level-2" style={{ width: 10, height: 10 }} />
-              <div className="heatmap-cell level-3" style={{ width: 10, height: 10 }} />
-              <div className="heatmap-cell level-4" style={{ width: 10, height: 10 }} />
-              <span style={{ fontSize: '0.7rem' }}>More</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Focus Consistency */}
-        <div className="card">
-          <div className="card-header"><h3>Focus Consistency</h3><span className="text-sm text-muted">4-Week Trend</span></div>
-          <div style={{ padding: '16px 0' }}>
-            {trends.map((week, i) => (
-              <div key={week.week_start} className="flex items-center mb-4" style={{ gap: 12, animation: `slideIn 0.3s ease ${i * 0.1}s forwards`, opacity: 0 }}>
-                <span className="text-sm text-muted font-mono" style={{ width: 72 }}>
-                  {week.week_start.slice(5)}
-                </span>
-                <div style={{ flex: 1, height: 28, background: 'var(--bg-tertiary)', borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+        {/* Hours Per Pillar */}
+        <div className="card" style={{ animation: 'slideUp 0.35s ease' }}>
+          <h4 className="mb-6">HOURS PER PILLAR</h4>
+          {(hoursPerPillar || []).map((pillar, i) => {
+            const pct = (pillar.hours / maxHours) * 100;
+            return (
+              <div key={pillar.name} className="mb-6" style={{ animation: `slideIn 0.3s ease ${i * 0.05}s forwards`, opacity: 0 }}>
+                <div className="flex items-center justify-between text-sm mb-2">
+                  <span style={{ fontWeight: 600 }}>{pillar.name}</span>
+                  <span className="font-mono" style={{ fontWeight: 700 }}>{pillar.hours}h</span>
+                </div>
+                <div style={{ height: 10, background: 'var(--bg-tertiary)', borderRadius: 5, overflow: 'hidden' }}>
                   <div style={{
-                    width: `${week.completion_pct}%`,
+                    width: `${pct}%`,
                     height: '100%',
-                    background: week.completion_pct >= 70
-                      ? 'linear-gradient(90deg, var(--accent-teal), rgba(0,228,184,0.7))'
-                      : week.completion_pct >= 40
-                      ? 'linear-gradient(90deg, var(--accent-orange), rgba(255,170,85,0.7))'
-                      : 'linear-gradient(90deg, var(--accent-red), rgba(255,92,108,0.7))',
-                    borderRadius: 8,
+                    background: pillar.color,
+                    borderRadius: 5,
                     transition: 'width 0.8s cubic-bezier(0.34,1.56,0.64,1)',
                   }} />
                 </div>
-                <span className="font-mono" style={{ width: 44, textAlign: 'right', fontWeight: 700, fontSize: '0.85rem' }}>
-                  {week.completion_pct}%
-                </span>
               </div>
-            ))}
-          </div>
+            );
+          })}
+        </div>
+
+        {/* Deep Work Ring */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, animation: 'slideUp 0.4s ease' }}>
+          <h4>DEEP WORK COMPLETION</h4>
+          <ProgressRing
+            size={140}
+            stroke={12}
+            progress={deepWorkPct || 0}
+            color={deepWorkPct >= 70 ? '#00e4b8' : deepWorkPct >= 40 ? '#ffaa55' : '#ff5c6c'}
+          />
+          <p className="text-sm text-muted">
+            {deepWorkPct >= 70 ? 'Excellent focus — keep this up!' : deepWorkPct >= 40 ? 'Decent but room for improvement' : 'Focus needs attention this week'}
+          </p>
+        </div>
+      </div>
+
+      {/* Heatmap */}
+      <div className="card mb-8" style={{ animation: 'slideUp 0.45s ease' }}>
+        <h4 className="mb-4"><Sparkles size={15} style={{ color: 'var(--accent-teal)' }} /> HABIT ACTIVITY — LAST 12 WEEKS</h4>
+        <div className="heatmap-grid">
+          {Array.from({ length: 84 }).map((_, i) => {
+            const d = new Date();
+            d.setDate(d.getDate() - (83 - i));
+            const dateStr = d.toISOString().split('T')[0];
+            const count = data.heatmapData?.[dateStr] || 0;
+            const level = count === 0 ? 0 : count <= 1 ? 1 : count <= 2 ? 2 : count <= 3 ? 3 : 4;
+            return (
+              <div key={i} className={`heatmap-cell level-${level}`} title={`${dateStr}: ${count} completions`} />
+            );
+          })}
+        </div>
+        <div className="heatmap-legend">
+          <span className="text-sm text-muted">Less</span>
+          {[0,1,2,3,4].map(l => <div key={l} className={`heatmap-cell level-${l}`} />)}
+          <span className="text-sm text-muted">More</span>
+        </div>
+      </div>
+
+      {/* Consistency Trend + Streak Graph */}
+      <div className="grid-2">
+        <div className="card" style={{ animation: 'slideUp 0.5s ease' }}>
+          <h4 className="mb-4"><TrendingUp size={15} /> FOCUS CONSISTENCY</h4>
+          {(consistencyTrend || []).map((week, i) => (
+            <div key={i} className="mb-4">
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="text-muted">{week.label}</span>
+                <span className="font-mono" style={{ fontWeight: 600, color: week.pct >= 70 ? 'var(--accent-teal)' : week.pct >= 40 ? 'var(--accent-orange)' : 'var(--accent-red)' }}>{week.pct}%</span>
+              </div>
+              <div style={{ height: 6, background: 'var(--bg-tertiary)', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ width: `${week.pct}%`, height: '100%', background: week.pct >= 70 ? 'var(--accent-teal)' : week.pct >= 40 ? 'var(--accent-orange)' : 'var(--accent-red)', borderRadius: 3 }} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="card" style={{ animation: 'slideUp 0.55s ease' }}>
+          <h4 className="mb-4"><Flame size={15} style={{ color: 'var(--accent-orange)' }} /> HABIT STREAKS</h4>
+          {(streakGraph || []).map(s => (
+            <div key={s.name} className="flex items-center justify-between mb-4">
+              <span className="text-sm" style={{ fontWeight: 500 }}>{s.name}</span>
+              <span className="streak-badge">
+                <Flame size={12} style={{ color: 'var(--accent-orange)' }} /> {s.streak}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

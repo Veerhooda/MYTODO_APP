@@ -1,72 +1,42 @@
 import { useState, useEffect } from 'react';
+import { X, Wind } from 'lucide-react';
 
 export default function FocusMode({ onExit }) {
   const [elapsed, setElapsed] = useState(0);
-  const [breathPhase, setBreathPhase] = useState('in');
 
   useEffect(() => {
-    const timer = setInterval(() => setElapsed(e => e + 1), 1000);
-    const breathTimer = setInterval(() => {
-      setBreathPhase(p => p === 'in' ? 'hold' : p === 'hold' ? 'out' : 'in');
-    }, 4000);
-
-    const handler = (e) => {
-      if (e.key === 'Escape') onExit();
-    };
+    const id = setInterval(() => setElapsed(s => s + 1), 1000);
+    const handler = (e) => { if (e.key === 'Escape') onExit(); };
     window.addEventListener('keydown', handler);
-
-    return () => {
-      clearInterval(timer);
-      clearInterval(breathTimer);
-      window.removeEventListener('keydown', handler);
-    };
+    return () => { clearInterval(id); window.removeEventListener('keydown', handler); };
   }, [onExit]);
 
   const mins = Math.floor(elapsed / 60);
   const secs = elapsed % 60;
 
   return (
-    <div className="focus-overlay">
-      <div className="focus-exit-hint">Press ESC to exit</div>
+    <div className="focus-mode">
       <div className="focus-content">
-        <div style={{
-          width: 120,
-          height: 120,
-          borderRadius: '50%',
-          background: 'var(--gradient-brand)',
-          margin: '0 auto 32px',
-          opacity: breathPhase === 'in' ? 0.8 : breathPhase === 'hold' ? 1 : 0.4,
-          transform: breathPhase === 'in' ? 'scale(1.1)' : breathPhase === 'hold' ? 'scale(1.15)' : 'scale(0.9)',
-          transition: 'all 4s ease-in-out',
-          boxShadow: '0 0 60px rgba(124,111,255,0.3)',
-        }} />
-        <div style={{
-          fontSize: '3.6rem',
-          fontWeight: 800,
-          fontFamily: 'var(--font-mono)',
-          color: 'var(--text-heading)',
-          letterSpacing: '-0.03em',
-          marginBottom: 8,
-        }}>
-          {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
+        <div className="focus-breathe-container">
+          <div className="focus-breathe-ring" />
+          <Wind size={32} strokeWidth={1.2} className="focus-breathe-icon" />
         </div>
-        <div style={{
-          fontSize: '0.85rem',
-          color: 'var(--text-muted)',
-          fontWeight: 500,
-          marginBottom: 32,
-        }}>
-          Deep focus session active
+
+        <h1 className="focus-title">Deep Focus</h1>
+        <p className="focus-subtitle">Breathe. Concentrate. Execute.</p>
+
+        <div className="focus-elapsed">
+          <span className="focus-elapsed-time">
+            {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
+          </span>
+          <span className="focus-elapsed-label">elapsed</span>
         </div>
-        <div style={{
-          fontSize: '0.75rem',
-          color: 'var(--text-muted)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.15em',
-          fontWeight: 700,
-        }}>
-          {breathPhase === 'in' ? 'Breathe in...' : breathPhase === 'hold' ? 'Hold...' : 'Breathe out...'}
-        </div>
+
+        <button className="focus-exit-btn" onClick={onExit}>
+          <X size={16} />
+          <span>Exit Focus</span>
+          <span className="shortcut">ESC</span>
+        </button>
       </div>
     </div>
   );
