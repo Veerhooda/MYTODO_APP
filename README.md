@@ -130,6 +130,7 @@ The system runs on a **4-week cycle** that automatically rotates your primary fo
 | **Database** | SQLite (better-sqlite3) | Zero-config, single-file, perfect for personal use |
 | **Auth**     | JWT + bcrypt            | Secure single-user authentication                  |
 | **Styling**  | Custom CSS              | Glassmorphism, no framework bloat                  |
+| **Icons**    | Lucide React            | Clean, consistent, lightweight SVG vector icons    |
 | **Fonts**    | Inter + JetBrains Mono  | Premium typography for UI + data                   |
 
 ---
