@@ -1904,9 +1904,7 @@ select {
 
   .page-header .flex {
     width: 100%;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    scrollbar-width: none;
+    flex-wrap: wrap;
   }
   .page-header .flex::-webkit-scrollbar {
     display: none;

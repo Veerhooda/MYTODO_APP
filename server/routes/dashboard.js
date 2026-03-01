@@ -69,10 +69,10 @@ router.get('/', authMiddleware, (req, res) => {
     LIMIT 5
   `).all(today, req.userId);
 
-  // Weekly quote
-  const weekNum = Math.floor((new Date(today).getTime() / (7 * 24 * 60 * 60 * 1000)));
+  // Daily quote
+  const dayNum = Math.floor((new Date(today).getTime() / (24 * 60 * 60 * 1000)));
   const quoteCount = db.prepare('SELECT COUNT(*) as cnt FROM quotes').get().cnt;
-  const quoteIndex = (weekNum % quoteCount) + 1;
+  const quoteIndex = (dayNum % quoteCount) + 1;
   const quote = db.prepare('SELECT * FROM quotes WHERE id = ?').get(quoteIndex) ||
     db.prepare('SELECT * FROM quotes LIMIT 1').get();
 

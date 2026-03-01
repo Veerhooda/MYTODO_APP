@@ -7,7 +7,8 @@ import { useAuth } from '../context/AuthContext';
 
 function getGreeting() {
   const hour = new Date().getHours();
-  if (hour < 6) return 'Late night grind';
+  // 4 AM boundary to catch early risers
+  if (hour < 4) return 'Late night grind';
   if (hour < 12) return 'Good morning';
   if (hour < 17) return 'Good afternoon';
   if (hour < 21) return 'Good evening';
