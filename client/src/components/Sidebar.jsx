@@ -8,11 +8,12 @@ const navItems = [
   { section: 'Tracking' },
   { path: '/habits', label: 'Habits', icon: '✦', shortcut: '3' },
   { path: '/tasks', label: 'Tasks', icon: '☐', shortcut: '4' },
-  { section: 'Reflection' },
-  { path: '/review', label: 'Weekly Review', icon: '⟳', shortcut: '5' },
-  { path: '/monthly', label: 'Monthly', icon: '◎', shortcut: '6' },
+  { section: 'Planning' },
+  { path: '/plan', label: 'Weekly Plan', icon: '📋', shortcut: '5' },
+  { path: '/review', label: 'Weekly Review', icon: '⟳', shortcut: '6' },
+  { path: '/monthly', label: 'Monthly Insights', icon: '◎', shortcut: '7' },
   { section: 'Insights' },
-  { path: '/analytics', label: 'Analytics', icon: '▤', shortcut: '7' },
+  { path: '/analytics', label: 'Analytics', icon: '▤', shortcut: '8' },
 ];
 
 export default function Sidebar({ onCommandPalette }) {

@@ -90,7 +90,12 @@ function initDb() {
       skill_growth TEXT DEFAULT '{}',
       consistency_score INTEGER,
       energy_reflection TEXT,
-      adjustment TEXT
+      adjustment TEXT,
+      key_learnings TEXT DEFAULT '[]',
+      blockers TEXT DEFAULT '[]',
+      mood TEXT,
+      next_week_intentions TEXT DEFAULT '[]',
+      gratitude TEXT
     );
 
     CREATE TABLE IF NOT EXISTS monthly_reflections (
@@ -100,7 +105,23 @@ function initDb() {
       practice_volume TEXT,
       bottleneck TEXT,
       strategic_change TEXT,
-      next_primary TEXT
+      next_primary TEXT,
+      monthly_goals TEXT DEFAULT '[]',
+      goals_met TEXT DEFAULT '[]',
+      habit_summary TEXT,
+      biggest_win TEXT,
+      overall_rating INTEGER
+    );
+
+    CREATE TABLE IF NOT EXISTS weekly_plans (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      week_start TEXT UNIQUE NOT NULL,
+      objectives TEXT DEFAULT '[]',
+      primary_focus TEXT,
+      secondary_focus TEXT,
+      notes TEXT,
+      time_budget TEXT DEFAULT '{}',
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS quotes (

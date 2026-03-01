@@ -11,6 +11,7 @@ import DashboardPage from './pages/DashboardPage';
 import CalendarPage from './pages/CalendarPage';
 import HabitsPage from './pages/HabitsPage';
 import TasksPage from './pages/TasksPage';
+import WeeklyPlanPage from './pages/WeeklyPlanPage';
 import WeeklyReviewPage from './pages/WeeklyReviewPage';
 import MonthlyReflectionPage from './pages/MonthlyReflectionPage';
 import AnalyticsPage from './pages/AnalyticsPage';
@@ -48,6 +49,7 @@ function ProtectedLayout() {
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/habits" element={<HabitsPage />} />
             <Route path="/tasks" element={<TasksPage />} />
+            <Route path="/plan" element={<WeeklyPlanPage />} />
             <Route path="/review" element={<WeeklyReviewPage />} />
             <Route path="/monthly" element={<MonthlyReflectionPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />

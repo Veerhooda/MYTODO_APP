@@ -1,19 +1,33 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { useToast } from '../context/ToastContext';
+import ProgressRing from '../components/ProgressRing';
 
 const PILLAR_NAMES = ['Competitive Programming', 'Systems', 'Development', 'Academics'];
+const PILLAR_COLORS = { 'Competitive Programming': '#7c6fff', Systems: '#00e4b8', Development: '#ffaa55', Academics: '#ff5c6c' };
 const BOTTLENECKS = ['Time management', 'Procrastination', 'Unclear priorities', 'Low energy', 'Distractions', 'Skill gaps', 'Over-commitment', 'Other'];
+const RATINGS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 export default function MonthlyReflectionPage() {
   const month = new Date().toISOString().slice(0, 7);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
   const toast = useToast();
 
   useEffect(() => {
-    api.get(`/reviews/monthly/${month}`).then(d => { setData(d); setLoading(false); });
+    api.get(`/reviews/monthly/${month}`).then(d => {
+      setData({
+        ...d,
+        monthly_goals: d.monthly_goals?.length ? d.monthly_goals : [
+          { text: '', met: false },
+          { text: '', met: false },
+          { text: '', met: false },
+        ],
+      });
+      setLoading(false);
+    });
   }, [month]);
 
   const save = async () => {
@@ -26,20 +40,36 @@ export default function MonthlyReflectionPage() {
   if (loading) {
     return (
       <div>
-        <div className="page-header"><h1>◎ Monthly Reflection</h1></div>
-        {[1,2,3].map(i => <div key={i} className="skeleton skeleton-block" style={{ height: 80 }} />)}
+        <div className="page-header"><h1>◎ Monthly Insights</h1></div>
+        <div className="grid-4 mb-6">{[1,2,3,4].map(i => <div key={i} className="skeleton skeleton-block" />)}</div>
+        <div className="grid-2">{[1,2].map(i => <div key={i} className="skeleton skeleton-card" style={{ height: 250 }} />)}</div>
       </div>
     );
   }
 
   if (!data) return <div className="text-muted">Failed to load.</div>;
 
+  const stats = data.monthlyStats || {};
   const monthName = new Date(month + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const updateGoal = (i, field, val) => {
+    const goals = [...(data.monthly_goals || [])];
+    goals[i] = { ...goals[i], [field]: val };
+    setData({ ...data, monthly_goals: goals });
+  };
+  const addGoal = () => setData({ ...data, monthly_goals: [...(data.monthly_goals || []), { text: '', met: false }] });
+
+  const tabs = [
+    { id: 'overview', label: '📊 Overview' },
+    { id: 'goals', label: '🎯 Goals' },
+    { id: 'reflect', label: '🧠 Reflect' },
+    { id: 'next', label: '➡ Next Month' },
+  ];
 
   return (
     <div>
       <div className="page-header">
-        <h1>◎ Monthly Reflection</h1>
+        <h1>◎ Monthly Insights</h1>
         <div className="flex" style={{ gap: 10 }}>
           <span className="text-sm font-mono text-muted">{monthName}</span>
           <button className="btn btn-primary btn-sm" onClick={save} disabled={saving}>
@@ -48,55 +78,225 @@ export default function MonthlyReflectionPage() {
         </div>
       </div>
 
-      <div className="review-section" style={{ animation: 'slideUp 0.3s ease' }}>
-        <h4>📦 OUTPUT SHIPPED</h4>
-        <textarea
-          value={data.output_shipped || ''}
-          onChange={e => setData({ ...data, output_shipped: e.target.value })}
-          placeholder="What tangible output did you ship this month? Projects, assignments, code..."
-        />
-      </div>
-
-      <div className="review-section" style={{ animation: 'slideUp 0.4s ease' }}>
-        <h4>📊 PRACTICE VOLUME SUMMARY</h4>
-        <textarea
-          value={data.practice_volume || ''}
-          onChange={e => setData({ ...data, practice_volume: e.target.value })}
-          placeholder="e.g., 25 DSA problems, 10 CF contests, 50hrs deep work, 3 projects..."
-        />
-      </div>
-
-      <div className="grid-2" style={{ animation: 'slideUp 0.5s ease' }}>
-        <div className="review-section">
-          <h4>🚧 BOTTLENECK</h4>
-          <select
-            value={data.bottleneck || ''}
-            onChange={e => setData({ ...data, bottleneck: e.target.value })}
-          >
-            <option value="">Select biggest bottleneck...</option>
-            {BOTTLENECKS.map(b => <option key={b} value={b}>{b}</option>)}
-          </select>
+      {/* Auto Stats */}
+      <div className="grid-4 mb-6">
+        <div className="stat-card" style={{ animation: 'slideUp 0.2s ease' }}>
+          <div className="stat-value">{stats.totalHours || 0}h</div>
+          <div className="stat-label">Total Deep Work</div>
         </div>
-
-        <div className="review-section">
-          <h4>🎯 NEXT MONTH PRIMARY FOCUS</h4>
-          <select
-            value={data.next_primary || ''}
-            onChange={e => setData({ ...data, next_primary: e.target.value })}
-          >
-            <option value="">Select primary pillar...</option>
-            {PILLAR_NAMES.map(p => <option key={p} value={p}>{p}</option>)}
-          </select>
+        <div className="stat-card" style={{ animation: 'slideUp 0.25s ease' }}>
+          <div className="stat-value" style={{ color: 'var(--accent-teal)' }}>{stats.completionRate || 0}%</div>
+          <div className="stat-label">Block Completion</div>
+        </div>
+        <div className="stat-card" style={{ animation: 'slideUp 0.3s ease' }}>
+          <div className="stat-value" style={{ color: 'var(--accent-purple)' }}>{stats.habitsCompleted || 0}</div>
+          <div className="stat-label">Habits Logged</div>
+        </div>
+        <div className="stat-card" style={{ animation: 'slideUp 0.35s ease' }}>
+          <div className="stat-value" style={{ color: 'var(--accent-orange)' }}>{stats.tasksCompleted || 0}<span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>/{stats.totalTasks || 0}</span></div>
+          <div className="stat-label">Tasks Done</div>
         </div>
       </div>
 
-      <div className="review-section" style={{ animation: 'slideUp 0.6s ease' }}>
-        <h4>🔄 ONE STRATEGIC CHANGE</h4>
-        <textarea
-          value={data.strategic_change || ''}
-          onChange={e => setData({ ...data, strategic_change: e.target.value })}
-          placeholder="What is the one strategic change you'll make next month to compound faster?"
-        />
+      {/* Completion Ring + Pillar Breakdown */}
+      <div className="grid-2 mb-8">
+        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 32, animation: 'slideUp 0.35s ease' }}>
+          <ProgressRing
+            size={110}
+            stroke={10}
+            progress={stats.completionRate || 0}
+            color={stats.completionRate >= 70 ? '#00e4b8' : stats.completionRate >= 40 ? '#ffaa55' : '#ff5c6c'}
+          />
+          <div>
+            <h3 style={{ marginBottom: 4 }}>Monthly Performance</h3>
+            <p className="text-sm text-muted">{stats.completedBlocks || 0} of {stats.totalBlocks || 0} blocks completed</p>
+            <p className="text-sm text-muted">{stats.weeksReviewed || 0} weeks reviewed</p>
+            <p className="text-sm text-muted">Avg consistency: <strong style={{ color: 'var(--accent-teal)' }}>{stats.avgConsistency || 0}%</strong></p>
+          </div>
+        </div>
+
+        <div className="card" style={{ animation: 'slideUp 0.4s ease' }}>
+          <h4 className="mb-4">PILLAR BREAKDOWN</h4>
+          {Object.entries(stats.pillarBreakdown || {}).length === 0 ? (
+            <p className="text-sm text-muted">No data yet.</p>
+          ) : (
+            Object.entries(stats.pillarBreakdown).map(([name, data]) => {
+              const maxH = Math.max(...Object.values(stats.pillarBreakdown).map(d => d.hours), 1);
+              return (
+                <div key={name} className="mb-4">
+                  <div className="flex items-center justify-between text-sm" style={{ marginBottom: 4 }}>
+                    <span style={{ fontWeight: 500 }}>{name}</span>
+                    <span className="font-mono" style={{ fontWeight: 700 }}>{data.hours.toFixed(1)}h · {data.blocks} blocks</span>
+                  </div>
+                  <div style={{ height: 8, background: 'var(--bg-tertiary)', borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{
+                      width: `${(data.hours / maxH) * 100}%`,
+                      height: '100%',
+                      background: PILLAR_COLORS[name] || 'var(--accent-purple)',
+                      borderRadius: 4,
+                      transition: 'width 0.6s cubic-bezier(0.34,1.56,0.64,1)',
+                    }} />
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex mb-6" style={{ gap: 4, borderBottom: '1px solid var(--border-color)' }}>
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            className="btn btn-ghost btn-sm"
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              borderBottom: activeTab === tab.id ? '2px solid var(--accent-purple)' : '2px solid transparent',
+              borderRadius: 0,
+              color: activeTab === tab.id ? 'var(--accent-purple-bright)' : 'var(--text-muted)',
+              fontWeight: activeTab === tab.id ? 600 : 400,
+              paddingBottom: 10,
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ animation: 'fadeIn 0.2s ease' }}>
+        {activeTab === 'overview' && (
+          <div>
+            {/* Overall Rating */}
+            <h4 className="mb-4">⭐ OVERALL MONTH RATING</h4>
+            <div className="flex mb-8" style={{ gap: 6 }}>
+              {RATINGS.map(r => (
+                <button
+                  key={r}
+                  className="btn-icon"
+                  onClick={() => setData({ ...data, overall_rating: r })}
+                  style={{
+                    width: 38, height: 38,
+                    background: data.overall_rating === r ? 'var(--accent-purple)' : 'transparent',
+                    color: data.overall_rating === r ? '#fff' : data.overall_rating >= r ? 'var(--accent-purple)' : 'var(--text-muted)',
+                    borderColor: data.overall_rating >= r ? 'var(--accent-purple)' : 'var(--border-color)',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+
+            <div className="review-section">
+              <h4>🏆 BIGGEST WIN THIS MONTH</h4>
+              <textarea
+                value={data.biggest_win || ''}
+                onChange={e => setData({ ...data, biggest_win: e.target.value })}
+                placeholder="What was the single biggest accomplishment this month?"
+                style={{ minHeight: 70 }}
+              />
+            </div>
+
+            <div className="review-section">
+              <h4>📦 OUTPUT SHIPPED</h4>
+              <textarea
+                value={data.output_shipped || ''}
+                onChange={e => setData({ ...data, output_shipped: e.target.value })}
+                placeholder="Projects, assignments, features, publications shipped..."
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'goals' && (
+          <div>
+            <h4 className="mb-4">🎯 MONTHLY GOALS</h4>
+            <p className="text-sm text-muted mb-4">Set goals at the start of the month, check them off as you complete them.</p>
+            <div className="flex flex-col mb-6" style={{ gap: 10 }}>
+              {(data.monthly_goals || []).map((goal, i) => (
+                <div key={i} className="flex items-center" style={{ gap: 10 }}>
+                  <button
+                    className="btn-icon"
+                    style={{
+                      width: 32, height: 32, fontSize: '0.8rem', flexShrink: 0,
+                      background: goal.met ? 'var(--accent-teal)' : 'transparent',
+                      borderColor: goal.met ? 'var(--accent-teal)' : 'var(--border-color)',
+                      color: goal.met ? '#fff' : 'var(--text-muted)',
+                    }}
+                    onClick={() => updateGoal(i, 'met', !goal.met)}
+                  >
+                    {goal.met ? '✓' : '○'}
+                  </button>
+                  <input
+                    value={goal.text || ''}
+                    onChange={e => updateGoal(i, 'text', e.target.value)}
+                    placeholder={`Goal ${i + 1}...`}
+                    style={{ flex: 1, textDecoration: goal.met ? 'line-through' : 'none', opacity: goal.met ? 0.5 : 1 }}
+                  />
+                </div>
+              ))}
+              <button className="btn btn-ghost btn-sm" onClick={addGoal} style={{ alignSelf: 'flex-start', color: 'var(--accent-purple)' }}>
+                + Add Goal
+              </button>
+            </div>
+
+            <div className="review-section">
+              <h4>📊 PRACTICE VOLUME</h4>
+              <textarea
+                value={data.practice_volume || ''}
+                onChange={e => setData({ ...data, practice_volume: e.target.value })}
+                placeholder="e.g., 40 DSA problems, 8 CF contests, 80hrs deep work, 4 projects..."
+              />
+            </div>
+
+            <div className="review-section">
+              <h4>✦ HABIT SUMMARY</h4>
+              <textarea
+                value={data.habit_summary || ''}
+                onChange={e => setData({ ...data, habit_summary: e.target.value })}
+                placeholder="Which habits stuck? Which fell off? What patterns emerged?"
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'reflect' && (
+          <div>
+            <div className="grid-2">
+              <div className="review-section">
+                <h4>🚧 BOTTLENECK</h4>
+                <select value={data.bottleneck || ''} onChange={e => setData({ ...data, bottleneck: e.target.value })}>
+                  <option value="">Select biggest bottleneck...</option>
+                  {BOTTLENECKS.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+
+              <div className="review-section">
+                <h4>🔄 STRATEGIC CHANGE</h4>
+                <textarea
+                  value={data.strategic_change || ''}
+                  onChange={e => setData({ ...data, strategic_change: e.target.value })}
+                  placeholder="What strategic change will compound over time?"
+                  style={{ minHeight: 60 }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'next' && (
+          <div>
+            <div className="review-section">
+              <h4>🎯 NEXT MONTH PRIMARY FOCUS</h4>
+              <select value={data.next_primary || ''} onChange={e => setData({ ...data, next_primary: e.target.value })}>
+                <option value="">Select primary pillar...</option>
+                {PILLAR_NAMES.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
