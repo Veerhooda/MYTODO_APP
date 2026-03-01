@@ -178,7 +178,7 @@ export default function DashboardPage({ onFocusMode }) {
                 <h3><Flame size={15} style={{ color: 'var(--accent-orange)' }} /> Streaks</h3>
               </div>
               {streaks.map(s => (
-                <div key={s.id} className="flex items-center justify-between mb-4" style={{ gap: 12 }}>
+                <div key={s.id} className="flex items-center justify-between mb-4 flex-wrap" style={{ gap: 12 }}>
                   <span className="text-sm" style={{ fontWeight: 500 }}>{s.name}</span>
                   <span className="streak-badge">
                     <Flame size={12} style={{ color: 'var(--accent-orange)' }} /> {s.streak}
@@ -195,7 +195,7 @@ export default function DashboardPage({ onFocusMode }) {
                 <p className="text-muted text-sm">No upcoming deadlines</p>
               ) : (
                 deadlines.map(d => (
-                  <div key={d.id} className="flex items-center justify-between mb-4" style={{ gap: 8 }}>
+                  <div key={d.id} className="flex items-center justify-between mb-4 flex-wrap" style={{ gap: 8 }}>
                     <div>
                       <div className="text-sm" style={{ fontWeight: 600 }}>{d.title}</div>
                       <span className={`badge ${PILLAR_BADGES[d.pillar_name] || ''}`}>{PILLAR_SHORT[d.pillar_name] || d.pillar_name}</span>
