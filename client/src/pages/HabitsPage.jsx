@@ -39,10 +39,10 @@ export default function HabitsPage() {
 
   const openManageModal = (habit = null) => {
     if (habit) {
-      setForm({ id: habit.id, name: habit.name, pillar_id: habit.pillar_id || '', target_per_week: habit.target_per_week });
-      setManageModal('edit');
+      setForm({ name: habit.name, pillar_id: habit.pillar_id || '', target_per_week: habit.target_per_week });
+      setManageModal(habit.id);
     } else {
-      setForm({ id: null, name: '', pillar_id: '', target_per_week: 3 });
+      setForm({ name: '', pillar_id: '', target_per_week: 3 });
       setManageModal('new');
     }
   };
@@ -56,7 +56,7 @@ export default function HabitsPage() {
         await api.post('/habits', payload);
         toast.success('Habit created');
       } else {
-        await api.put(`/habits/${form.id}`, payload);
+        await api.put(`/habits/${manageModal}`, payload);
         toast.success('Habit updated');
       }
       setManageModal(null);
@@ -67,10 +67,10 @@ export default function HabitsPage() {
   };
 
   const handleDeleteHabit = async () => {
-    if (manageModal === 'new' || !form.id) return;
+    if (manageModal === 'new' || !manageModal) return;
     if (window.confirm(`Are you sure you want to completely delete "${form.name}"? This removes all its historical logs.`)) {
       try {
-        await api.delete(`/habits/${form.id}`);
+        await api.delete(`/habits/${manageModal}`);
         toast.info('Habit deleted');
         setManageModal(null);
         loadHabits();

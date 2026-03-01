@@ -67,34 +67,44 @@ router.get('/', authMiddleware, (req, res) => {
 
 // Create a new habit
 router.post('/', authMiddleware, (req, res) => {
-  const db = getDb();
-  const { name, pillar_id, target_per_week } = req.body;
+  try {
+    const db = getDb();
+    const { name, pillar_id, target_per_week } = req.body;
 
-  if (!name || !target_per_week) {
-    return res.status(400).json({ error: 'Name and target_per_week are required' });
+    if (!name || !target_per_week) {
+      return res.status(400).json({ error: 'Name and target_per_week are required' });
+    }
+
+    const result = db.prepare(
+      'INSERT INTO habits (user_id, name, pillar_id, target_per_week) VALUES (?, ?, ?, ?)'
+    ).run(req.userId, name, pillar_id || null, Number(target_per_week));
+
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch (error) {
+    console.error('Error creating habit:', error);
+    res.status(500).json({ error: 'Server error creating habit' });
   }
-
-  const result = db.prepare(
-    'INSERT INTO habits (user_id, name, pillar_id, target_per_week) VALUES (?, ?, ?, ?)'
-  ).run(req.userId, name, pillar_id || null, target_per_week);
-
-  res.json({ success: true, id: result.lastInsertRowid });
 });
 
 // Update an existing habit
 router.put('/:id', authMiddleware, (req, res) => {
-  const db = getDb();
-  const { name, pillar_id, target_per_week } = req.body;
+  try {
+    const db = getDb();
+    const { name, pillar_id, target_per_week } = req.body;
 
-  // Verify ownership
-  const habit = db.prepare('SELECT id FROM habits WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
-  if (!habit) return res.status(403).json({ error: 'Unauthorized' });
+    // Verify ownership
+    const habit = db.prepare('SELECT id FROM habits WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
+    if (!habit) return res.status(404).json({ error: 'Habit not found or unauthorized' });
 
-  db.prepare(
-    'UPDATE habits SET name = ?, pillar_id = ?, target_per_week = ? WHERE id = ?'
-  ).run(name, pillar_id || null, target_per_week, req.params.id);
+    db.prepare(
+      'UPDATE habits SET name = ?, pillar_id = ?, target_per_week = ? WHERE id = ?'
+    ).run(name, pillar_id || null, Number(target_per_week), req.params.id);
 
-  res.json({ success: true });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating habit:', error);
+    res.status(500).json({ error: 'Server error updating habit' });
+  }
 });
 
 // Delete a habit
