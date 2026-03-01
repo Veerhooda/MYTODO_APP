@@ -897,48 +897,7 @@ select {
   background: var(--accent-purple-dim);
 }
 
-/* === Quote Block === */
-.quote-block {
-  background: var(--gradient-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 28px 32px;
-  position: relative;
-  backdrop-filter: blur(10px);
-  overflow: hidden;
-}
-
-.quote-block::before {
-  content: '"';
-  position: absolute;
-  top: -4px;
-  left: 20px;
-  font-size: 4.5rem;
-  background: var(--gradient-brand);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  opacity: 0.3;
-  font-family: Georgia, serif;
-  line-height: 1;
-}
-
-.quote-text {
-  font-size: 1rem;
-  font-style: italic;
-  color: var(--text-primary);
-  line-height: 1.75;
-  padding-left: 24px;
-}
-
-.quote-author {
-  margin-top: 10px;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  padding-left: 24px;
-  font-weight: 500;
-}
-
+/* Legacy Quote Block removed to prevent duplication */
 /* === Focus Cards === */
 .focus-card {
   padding: 20px 24px;
@@ -1628,33 +1587,58 @@ select {
 
 /* === Quote Block === */
 .quote-block {
-  background: var(--gradient-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 24px 28px;
+  background: linear-gradient(135deg, rgba(124, 111, 255, 0.05) 0%, rgba(0, 212, 170, 0.05) 100%);
+  border: 1px solid rgba(124, 111, 255, 0.15);
+  border-radius: var(--radius-lg);
+  padding: 32px 40px;
   position: relative;
-  backdrop-filter: blur(10px);
-  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.quote-block::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(124, 111, 255, 0.6), transparent);
 }
 
 .quote-icon {
   color: var(--accent-purple);
-  opacity: 0.3;
-  margin-bottom: 8px;
+  opacity: 0.9;
+  background: rgba(124, 111, 255, 0.15);
+  padding: 12px;
+  border-radius: 50%;
+  width: 48px !important;
+  height: 48px !important;
+  box-shadow: 0 4px 15px rgba(124, 111, 255, 0.25);
+  margin-bottom: 4px;
 }
 
 .quote-text {
-  font-size: 1rem;
+  font-size: 1.15rem;
   font-style: italic;
-  color: var(--text-primary);
-  line-height: 1.7;
-  margin-bottom: 8px;
+  font-weight: 400;
+  color: var(--text-heading);
+  line-height: 1.6;
+  max-width: 85%;
+  margin: 0;
 }
 
 .quote-author {
-  font-size: 0.78rem;
-  color: var(--text-muted);
+  font-size: 0.85rem;
+  color: var(--accent-teal);
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
 }
 
 /* === FAB === */
