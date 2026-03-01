@@ -140,7 +140,7 @@ export default function DashboardPage({ onFocusMode }) {
         </div>
       </div>
 
-      <div className="grid-2 mb-8" style={{ gridTemplateColumns: '1fr 320px' }}>
+      <div className="grid-2 dashboard-split mb-8">
         {/* Left: Today's Blocks + Streaks */}
         <div>
           <h4 className="mb-4">TODAY'S WORK BLOCKS</h4>
