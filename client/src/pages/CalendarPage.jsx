@@ -18,8 +18,17 @@ export default function CalendarPage() {
     task_title: '', pillar_id: '', start_time: '09:00', duration: 60, date: '',
   });
 
+  const [view, setView] = useState('week'); // 'week' | 'day'
+  const [selectedDay, setSelectedDay] = useState(new Date().getDay() === 0 ? 6 : new Date().getDay() - 1); // 0-6 index
+  const [currentTime, setCurrentTime] = useState(new Date());
+
   const weekEnd = formatDate(addDays(new Date(weekStart), 6));
   const today = formatDate(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   const loadBlocks = useCallback(() => {
     setLoading(true);
@@ -121,10 +130,17 @@ export default function CalendarPage() {
   return (
     <div>
       <div className="page-header">
-        <h1><CalendarDays size={22} strokeWidth={1.8} /> Weekly Planner</h1>
-        <div className="flex" style={{ gap: 8 }}>
+        <h1><CalendarDays size={22} strokeWidth={1.8} /> {view === 'week' ? 'Weekly Planner' : 'Daily Schedule'}</h1>
+        <div className="flex" style={{ gap: 8, alignItems: 'center' }}>
+          <div className="view-switcher mr-4">
+            <button className={view === 'day' ? 'active' : ''} onClick={() => setView('day')}>Day</button>
+            <button className={view === 'week' ? 'active' : ''} onClick={() => setView('week')}>Week</button>
+          </div>
           <button className="btn btn-secondary btn-sm" onClick={prevWeek}><ChevronLeft size={14} /></button>
-          <button className="btn btn-secondary btn-sm" onClick={() => setWeekStart(formatDate(getMonday(new Date())))}>Today</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => {
+            setWeekStart(formatDate(getMonday(new Date())));
+            setSelectedDay(new Date().getDay() === 0 ? 6 : new Date().getDay() - 1);
+          }}>Today</button>
           <button className="btn btn-secondary btn-sm" onClick={nextWeek}><ChevronRight size={14} /></button>
           <button className="btn btn-primary btn-sm" onClick={() => {
             setEditBlock(null);
@@ -146,54 +162,73 @@ export default function CalendarPage() {
         )}
       </div>
 
-      <div className="calendar-grid">
-        <div className="calendar-header" style={{ background: 'var(--bg-secondary)' }}>Time</div>
+      <div className="calendar-grid" style={{ gridTemplateColumns: view === 'week' ? '70px repeat(7, 1fr)' : '80px 1fr' }}>
+        <div className="calendar-header" style={{ background: 'var(--bg-secondary)', borderRight: '1px solid var(--border-color)' }}>Time</div>
         {weekDates.map((date, i) => {
+          if (view === 'day' && i !== selectedDay) return null;
           const dayName = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i];
           return (
-            <div key={i} className={`calendar-header ${date === today ? 'today' : ''}`}>
-              <div>{dayName}</div>
+            <div key={i} 
+                 className={`calendar-header ${date === today ? 'today' : ''}`} 
+                 style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                 onClick={() => { setView('day'); setSelectedDay(i); }}>
+              <div style={{ fontSize: view === 'day' ? '1rem' : '0.76rem' }}>{dayName}</div>
               <div style={{ fontSize: '0.68rem', opacity: 0.6, fontFamily: 'var(--font-mono)' }}>{date.slice(5)}</div>
             </div>
           );
         })}
 
-        {renderSlots.map(time => (
-          <div key={time} style={{ display: 'contents' }}>
-            <div className="calendar-time">{time}</div>
-            {Array.from({ length: 7 }, (_, dayIndex) => {
-              const cellBlocks = getBlocksAt(dayIndex, time);
-              return (
-                <div key={dayIndex} className="calendar-cell"
-                  onDrop={(e) => handleDrop(e, dayIndex, time)}
-                  onDragOver={handleDragOver}
-                  onClick={() => { if (cellBlocks.length === 0) openCreateModal(dayIndex, time); }}
-                  style={{ cursor: cellBlocks.length === 0 ? 'pointer' : 'default' }}
-                >
-                  {cellBlocks.map(block => (
-                    <div key={block.id}
-                      className={`time-block-card ${block.status}`}
-                      style={{ borderLeftColor: block.pillar_color || '#7c6fff' }}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, block)}
-                      onClick={(e) => { e.stopPropagation(); toggleStatus(block); }}
-                      onContextMenu={(e) => { e.preventDefault(); openEditModal(block, e); }}
-                    >
-                      <div className="block-title">{block.task_title}</div>
-                      <div className="block-meta">
-                        {block.duration}m · {block.pillar_name || 'General'}
-                        <button className="btn-icon" onClick={(e) => handleDelete(block, e)}
-                          style={{ width: 16, height: 16, fontSize: '0.55rem', color: 'var(--accent-red)', marginLeft: 4, opacity: 0.4 }}>
-                          <X size={10} />
-                        </button>
+        {renderSlots.map(time => {
+          const [hour, min] = time.split(':').map(Number);
+          const currentH = currentTime.getHours();
+          const currentM = currentTime.getMinutes();
+          const isCurrentHour = currentH === hour;
+          const lineTop = `${(currentM / 60) * 100}%`;
+
+          return (
+            <div key={time} style={{ display: 'contents' }}>
+              <div className="calendar-time" style={{ borderRight: '1px solid var(--border-color)' }}>{time}</div>
+              {Array.from({ length: 7 }, (_, dayIndex) => {
+                if (view === 'day' && dayIndex !== selectedDay) return null;
+                const cellDate = formatDate(addDays(new Date(weekStart), dayIndex));
+                const isTodayCell = cellDate === today;
+                
+                const cellBlocks = getBlocksAt(dayIndex, time);
+                return (
+                  <div key={dayIndex} className="calendar-cell interactive-cell"
+                    onDrop={(e) => handleDrop(e, dayIndex, time)}
+                    onDragOver={handleDragOver}
+                    onClick={() => { if (cellBlocks.length === 0) openCreateModal(dayIndex, time); }}
+                    style={{ cursor: cellBlocks.length === 0 ? 'pointer' : 'default', padding: view === 'day' ? '8px 16px' : '4px' }}
+                  >
+                    {isTodayCell && isCurrentHour && (
+                      <div className="current-time-line" style={{ top: lineTop }}></div>
+                    )}
+                    {cellBlocks.map(block => (
+                      <div key={block.id}
+                        className={`time-block-card ${block.status}`}
+                        style={{ borderLeftColor: block.pillar_color || '#7c6fff', marginBottom: view === 'day' ? 12 : 6 }}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, block)}
+                        onClick={(e) => { e.stopPropagation(); toggleStatus(block); }}
+                        onContextMenu={(e) => { e.preventDefault(); openEditModal(block, e); }}
+                      >
+                        <div className="block-title" style={{ fontSize: view === 'day' ? '0.9rem' : '0.82rem' }}>{block.task_title}</div>
+                        <div className="block-meta" style={{ fontSize: view === 'day' ? '0.78rem' : '0.72rem' }}>
+                          {block.duration}m · {block.pillar_name || 'General'}
+                          <button className="btn-icon" onClick={(e) => handleDelete(block, e)}
+                            style={{ width: view === 'day' ? 20 : 16, height: view === 'day' ? 20 : 16, fontSize: '0.65rem', color: 'var(--accent-red)', marginLeft: 8, opacity: 0.6 }}>
+                            <X size={12} />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        ))}
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
 
       {showModal && (

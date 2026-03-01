@@ -572,39 +572,54 @@ select {
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.75);
+  background: rgba(4, 4, 8, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(8px);
-  animation: fadeIn 0.2s ease;
+  backdrop-filter: blur(12px);
+  animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .modal {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 32px 36px;
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  padding: 36px 40px;
   width: 100%;
   max-width: 540px;
   max-height: 85vh;
   overflow-y: auto;
-  box-shadow: var(--shadow-lg), 0 0 60px rgba(0,0,0,0.4);
-  animation: scaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  animation: scaleIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
+  backdrop-filter: blur(20px);
 }
 
 .modal::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(124,111,255,0.3), transparent);
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-purple), var(--accent-teal), transparent);
+  opacity: 0.7;
 }
 
-.modal h2 { margin-bottom: 24px; font-size: 1.2rem; }
-.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+.modal h2 { 
+  margin-bottom: 28px; 
+  font-size: 1.35rem; 
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.modal-actions { 
+  display: flex; 
+  gap: 12px; 
+  justify-content: flex-end; 
+  margin-top: 32px; 
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
 
 /* === Toast System === */
 .toast-container {
@@ -800,6 +815,81 @@ select {
   padding: 4px;
   position: relative;
   transition: background var(--transition);
+}
+
+.calendar-cell.interactive-cell:hover {
+  background: rgba(124, 111, 255, 0.04);
+}
+
+.calendar-cell.interactive-cell:hover::after {
+  content: '+ Add Block';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-purple-bright);
+  opacity: 0.6;
+  pointer-events: none;
+  font-family: var(--font-family);
+  animation: fadeIn 0.2s ease;
+}
+
+/* === Live Time Indicator === */
+.current-time-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent-red);
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 0 8px var(--accent-red);
+}
+
+.current-time-line::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  box-shadow: 0 0 10px var(--accent-red);
+}
+
+/* === Segmented View Switcher === */
+.view-switcher {
+  display: inline-flex;
+  background: rgba(255,255,255,0.03);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.view-switcher button {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 4px 14px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.view-switcher button.active {
+  background: var(--accent-purple);
+  color: white;
+  box-shadow: 0 2px 8px rgba(124,111,255,0.3);
+}
+
+.view-switcher button:hover:not(.active) {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.05);
 }
 
 .calendar-cell.drop-target,
