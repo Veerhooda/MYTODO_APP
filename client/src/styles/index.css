@@ -990,7 +990,6 @@ select {
   background: var(--accent-purple-dim);
 }
 
-/* Legacy Quote Block removed to prevent duplication */
 /* === Focus Cards === */
 .focus-card {
   padding: 20px 24px;

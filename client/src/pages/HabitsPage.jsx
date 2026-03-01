@@ -2,20 +2,26 @@ import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { PILLAR_BADGES, PILLAR_SHORT, DAYS, formatDate } from '../utils/constants';
 import { useToast } from '../context/ToastContext';
-import { Flame, Check, Sparkles, TrendingUp } from 'lucide-react';
+import { Flame, Check, Sparkles, Plus, Edit3, Trash2 } from 'lucide-react';
 
 export default function HabitsPage() {
   const [habits, setHabits] = useState([]);
+  const [pillars, setPillars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [logModal, setLogModal] = useState(null);
+  const [manageModal, setManageModal] = useState(null); // null, 'new', or habit object to edit
   const [note, setNote] = useState('');
+  
+  const [form, setForm] = useState({ name: '', pillar_id: '', target_per_week: 3 });
+  
   const toast = useToast();
   const today = formatDate(new Date());
 
   useEffect(() => {
     loadHabits();
-    window.addEventListener('close-modal', () => setLogModal(null));
-    return () => window.removeEventListener('close-modal', () => setLogModal(null));
+    api.get('/dashboard').then(d => setPillars(d.pillars || []));
+    window.addEventListener('close-modal', () => { setLogModal(null); setManageModal(null); });
+    return () => window.removeEventListener('close-modal', () => { setLogModal(null); setManageModal(null); });
   }, []);
 
   const loadHabits = () => {
@@ -29,6 +35,40 @@ export default function HabitsPage() {
     setLogModal(null);
     setNote('');
     loadHabits();
+  };
+
+  const openManageModal = (habit = null) => {
+    if (habit) {
+      setForm({ name: habit.name, pillar_id: habit.pillar_id || '', target_per_week: habit.target_per_week });
+    } else {
+      setForm({ name: '', pillar_id: '', target_per_week: 3 });
+    }
+    setManageModal(habit || 'new');
+  };
+
+  const handleSaveHabit = async () => {
+    if (!form.name.trim()) return;
+    const payload = { ...form, pillar_id: form.pillar_id ? parseInt(form.pillar_id) : null, target_per_week: parseInt(form.target_per_week) };
+    
+    if (manageModal === 'new') {
+      await api.post('/habits', payload);
+      toast.success('Habit created');
+    } else {
+      await api.put(`/habits/${manageModal.id}`, payload);
+      toast.success('Habit updated');
+    }
+    setManageModal(null);
+    loadHabits();
+  };
+
+  const handleDeleteHabit = async () => {
+    if (manageModal === 'new' || !manageModal.id) return;
+    if (window.confirm(`Are you sure you want to completely delete "${manageModal.name}"? This removes all its historical logs.`)) {
+      await api.delete(`/habits/${manageModal.id}`);
+      toast.info('Habit deleted');
+      setManageModal(null);
+      loadHabits();
+    }
   };
 
   const getWeekDays = () => {
@@ -59,10 +99,13 @@ export default function HabitsPage() {
     <div>
       <div className="page-header">
         <h1><Sparkles size={22} strokeWidth={1.8} /> Habit Tracker</h1>
-        <div className="flex items-center" style={{ gap: 8 }}>
+        <div className="flex items-center" style={{ gap: 12 }}>
           <span className="text-sm text-muted">
             {habits.reduce((s, h) => s + h.completedThisWeek, 0)} / {habits.reduce((s, h) => s + h.target_per_week, 0)} this week
           </span>
+          <button className="btn btn-primary btn-sm" onClick={() => openManageModal()}>
+            <Plus size={14} /> New Habit
+          </button>
         </div>
       </div>
 
@@ -76,13 +119,18 @@ export default function HabitsPage() {
             <div className="habit-header">
               <div>
                 <div className="habit-name">{habit.name}</div>
-                <span className={`badge ${PILLAR_BADGES[habit.pillar_name] || ''}`} style={{ marginTop: 6 }}>
+                <span className={`badge ${PILLAR_BADGES[habit.pillar_name] || ''}`} style={{ marginTop: 6, display: 'inline-block' }}>
                   {PILLAR_SHORT[habit.pillar_name] || habit.pillar_name}
                 </span>
               </div>
-              <span className="streak-badge">
-                <Flame size={13} style={{ color: 'var(--accent-orange)' }} /> {habit.streak}
-              </span>
+              <div className="flex items-center gap-4">
+                <span className="streak-badge">
+                  <Flame size={13} style={{ color: 'var(--accent-orange)' }} /> {habit.streak}
+                </span>
+                <button className="btn-icon" style={{ width: 28, height: 28, border: 'none', background: 'transparent' }} onClick={() => openManageModal(habit)}>
+                  <Edit3 size={14} />
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center justify-between text-sm" style={{ marginBottom: 4 }}>
@@ -158,6 +206,54 @@ export default function HabitsPage() {
               <button className="btn btn-primary" onClick={handleLog} disabled={!note.trim()}>
                 <Check size={14} /> Mark Complete
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {manageModal && (
+        <div className="modal-overlay" onClick={() => setManageModal(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h2>{manageModal === 'new' ? <><Plus size={18} /> New Habit</> : <><Edit3 size={18} /> Edit Habit</>}</h2>
+            
+            <div className="form-group">
+              <label>Habit Name</label>
+              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g., Read 10 Pages" autoFocus />
+            </div>
+
+            <div className="grid-2">
+              <div className="form-group">
+                <label>Pillar</label>
+                <select value={form.pillar_id} onChange={e => setForm({ ...form, pillar_id: e.target.value })}>
+                  <option value="">General</option>
+                  {pillars.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Weekly Target</label>
+                <div className="flex" style={{ gap: 4, flexWrap: 'wrap' }}>
+                  {[1,2,3,4,5,6,7].map(x => (
+                    <button key={x} className={`btn btn-sm ${form.target_per_week === x ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => setForm({ ...form, target_per_week: x })} style={{ minWidth: 28, padding: '4px 6px' }}>
+                      {x}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-actions" style={{ justifyContent: manageModal === 'new' ? 'flex-end' : 'space-between' }}>
+              {manageModal !== 'new' && (
+                <button className="btn btn-danger btn-sm" onClick={handleDeleteHabit} style={{ padding: '8px 12px' }}>
+                  <Trash2 size={14} /> Delete
+                </button>
+              )}
+              <div className="flex gap-4">
+                <button className="btn btn-secondary" onClick={() => setManageModal(null)}>Cancel</button>
+                <button className="btn btn-primary" onClick={handleSaveHabit} disabled={!form.name.trim()}>
+                  {manageModal === 'new' ? 'Create Habit' : 'Save Changes'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
