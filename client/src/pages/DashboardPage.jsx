@@ -213,7 +213,7 @@ export default function DashboardPage({ onFocusMode }) {
           <h4 className="mb-4">POMODORO TIMER</h4>
           <PomodoroTimer />
 
-          {analyticsData?.hoursPerPillar && (
+          {analyticsData?.hoursPerPillar && analyticsData.hoursPerPillar.length > 0 && (
             <div className="card mt-6" style={{ padding: '18px 22px' }}>
               <h4 className="mb-4">HOURS THIS WEEK</h4>
               {analyticsData.hoursPerPillar.map(p => {

@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
+import { useNavigate } from 'react-router-dom';
 import { LogIn, User, Lock, Loader } from 'lucide-react';
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -15,9 +17,9 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const data = await api.post('/auth/login', { username, password });
-      login(data.token, data.user.username);
-    } catch {
+      await login(username, password);
+      navigate('/');
+    } catch (err) {
       setError('Invalid credentials');
     }
     setLoading(false);

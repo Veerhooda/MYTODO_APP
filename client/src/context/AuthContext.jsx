@@ -5,14 +5,16 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [user, setUser] = useState(localStorage.getItem('username'));
+  const [user, setUser] = useState(
+    localStorage.getItem('username') ? { username: localStorage.getItem('username') } : null
+  );
 
   const login = async (username, password) => {
     const data = await api.post('/auth/login', { username, password });
     localStorage.setItem('token', data.token);
     localStorage.setItem('username', data.username);
     setToken(data.token);
-    setUser(data.username);
+    setUser({ username: data.username });
     return data;
   };
 

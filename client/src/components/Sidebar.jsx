@@ -49,10 +49,10 @@ export default function Sidebar({ onCommandPalette }) {
 
       <div className="sidebar-user">
         <div className="sidebar-avatar">
-          {(user || 'V').charAt(0).toUpperCase()}
+          {(user?.username || 'V').charAt(0).toUpperCase()}
         </div>
         <div className="sidebar-user-info">
-          <div className="sidebar-user-name">{user || 'User'}</div>
+          <div className="sidebar-user-name" style={{ textTransform: 'capitalize' }}>{user?.username || 'User'}</div>
           <div className="sidebar-user-role">Engineering Student</div>
         </div>
       </div>
