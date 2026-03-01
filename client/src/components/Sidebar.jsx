@@ -21,11 +21,11 @@ const navItems = [
   { path: '/analytics', label: 'Analytics', icon: BarChart3, shortcut: '8' },
 ];
 
-export default function Sidebar({ onCommandPalette }) {
+export default function Sidebar({ isOpen, onClose, onCommandPalette }) {
   const { logout, user } = useAuth();
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`}>
       <div className="sidebar-brand">
         <div className="brand-icon">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#brandGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -69,6 +69,7 @@ export default function Sidebar({ onCommandPalette }) {
                 to={item.path}
                 end={item.path === '/'}
                 className={({ isActive }) => isActive ? 'active' : ''}
+                onClick={onClose}
               >
                 <Icon size={16} strokeWidth={1.8} />
                 <span>{item.label}</span>

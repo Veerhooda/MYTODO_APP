@@ -15,11 +15,13 @@ import WeeklyPlanPage from './pages/WeeklyPlanPage';
 import WeeklyReviewPage from './pages/WeeklyReviewPage';
 import MonthlyReflectionPage from './pages/MonthlyReflectionPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import MobileHeader from './components/MobileHeader';
 
 function ProtectedLayout() {
   const { isAuthenticated } = useAuth();
   const [cmdOpen, setCmdOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   useKeyboardShortcuts();
 
   useEffect(() => {
@@ -41,7 +43,19 @@ function ProtectedLayout() {
 
   return (
     <div className="app-layout">
-      <Sidebar onCommandPalette={() => setCmdOpen(true)} />
+      <MobileHeader 
+        onMenuClick={() => setIsSidebarOpen(true)}
+        onCommandClick={() => setCmdOpen(true)}
+      />
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+        onCommandPalette={() => {
+          setIsSidebarOpen(false);
+          setCmdOpen(true);
+        }} 
+      />
+      {isSidebarOpen && <div className="mobile-sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />}
       <main className="main-content">
         <div className="page-enter" key={window.location.pathname}>
           <Routes>
