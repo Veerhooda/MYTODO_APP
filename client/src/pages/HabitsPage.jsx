@@ -39,35 +39,44 @@ export default function HabitsPage() {
 
   const openManageModal = (habit = null) => {
     if (habit) {
-      setForm({ name: habit.name, pillar_id: habit.pillar_id || '', target_per_week: habit.target_per_week });
+      setForm({ id: habit.id, name: habit.name, pillar_id: habit.pillar_id || '', target_per_week: habit.target_per_week });
+      setManageModal('edit');
     } else {
-      setForm({ name: '', pillar_id: '', target_per_week: 3 });
+      setForm({ id: null, name: '', pillar_id: '', target_per_week: 3 });
+      setManageModal('new');
     }
-    setManageModal(habit || 'new');
   };
 
   const handleSaveHabit = async () => {
     if (!form.name.trim()) return;
-    const payload = { ...form, pillar_id: form.pillar_id ? parseInt(form.pillar_id) : null, target_per_week: parseInt(form.target_per_week) };
+    const payload = { name: form.name.trim(), pillar_id: form.pillar_id ? parseInt(form.pillar_id) : null, target_per_week: parseInt(form.target_per_week) };
     
-    if (manageModal === 'new') {
-      await api.post('/habits', payload);
-      toast.success('Habit created');
-    } else {
-      await api.put(`/habits/${manageModal.id}`, payload);
-      toast.success('Habit updated');
+    try {
+      if (manageModal === 'new') {
+        await api.post('/habits', payload);
+        toast.success('Habit created');
+      } else {
+        await api.put(`/habits/${form.id}`, payload);
+        toast.success('Habit updated');
+      }
+      setManageModal(null);
+      loadHabits();
+    } catch (err) {
+      toast.error('Failed to save habit');
     }
-    setManageModal(null);
-    loadHabits();
   };
 
   const handleDeleteHabit = async () => {
-    if (manageModal === 'new' || !manageModal.id) return;
-    if (window.confirm(`Are you sure you want to completely delete "${manageModal.name}"? This removes all its historical logs.`)) {
-      await api.delete(`/habits/${manageModal.id}`);
-      toast.info('Habit deleted');
-      setManageModal(null);
-      loadHabits();
+    if (manageModal === 'new' || !form.id) return;
+    if (window.confirm(`Are you sure you want to completely delete "${form.name}"? This removes all its historical logs.`)) {
+      try {
+        await api.delete(`/habits/${form.id}`);
+        toast.info('Habit deleted');
+        setManageModal(null);
+        loadHabits();
+      } catch (err) {
+        toast.error('Failed to delete habit');
+      }
     }
   };
 
@@ -242,13 +251,13 @@ export default function HabitsPage() {
               </div>
             </div>
 
-            <div className="modal-actions" style={{ justifyContent: manageModal === 'new' ? 'flex-end' : 'space-between' }}>
+            <div className="modal-actions" style={{ justifyContent: manageModal === 'new' ? 'flex-end' : 'space-between', alignItems: 'center' }}>
               {manageModal !== 'new' && (
-                <button className="btn btn-danger btn-sm" onClick={handleDeleteHabit} style={{ padding: '8px 12px' }}>
-                  <Trash2 size={14} /> Delete
+                <button className="btn btn-danger btn-sm" onClick={handleDeleteHabit}>
+                  <Trash2 size={14} /> Delete Habit
                 </button>
               )}
-              <div className="flex gap-4">
+              <div className="flex" style={{ gap: 12 }}>
                 <button className="btn btn-secondary" onClick={() => setManageModal(null)}>Cancel</button>
                 <button className="btn btn-primary" onClick={handleSaveHabit} disabled={!form.name.trim()}>
                   {manageModal === 'new' ? 'Create Habit' : 'Save Changes'}
