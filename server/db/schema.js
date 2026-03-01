@@ -26,19 +26,26 @@ function initDb() {
 
     CREATE TABLE IF NOT EXISTS pillars (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT UNIQUE NOT NULL,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
       color TEXT NOT NULL,
-      goals TEXT NOT NULL DEFAULT '[]'
+      goals TEXT NOT NULL DEFAULT '[]',
+      FOREIGN KEY (user_id) REFERENCES user(id),
+      UNIQUE(user_id, name)
     );
 
     CREATE TABLE IF NOT EXISTS rotation_config (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
       cycle_start_date TEXT NOT NULL,
-      current_override TEXT DEFAULT NULL
+      current_override TEXT DEFAULT NULL,
+      FOREIGN KEY (user_id) REFERENCES user(id),
+      UNIQUE(user_id)
     );
 
     CREATE TABLE IF NOT EXISTS time_blocks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
       date TEXT NOT NULL,
       block_number INTEGER NOT NULL,
       pillar_id INTEGER,
@@ -48,14 +55,17 @@ function initDb() {
       status TEXT NOT NULL DEFAULT 'pending',
       is_recurring INTEGER NOT NULL DEFAULT 0,
       day_of_week INTEGER,
+      FOREIGN KEY (user_id) REFERENCES user(id),
       FOREIGN KEY (pillar_id) REFERENCES pillars(id)
     );
 
     CREATE TABLE IF NOT EXISTS habits (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
       name TEXT NOT NULL,
       pillar_id INTEGER NOT NULL,
       target_per_week INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES user(id),
       FOREIGN KEY (pillar_id) REFERENCES pillars(id)
     );
 
@@ -71,6 +81,7 @@ function initDb() {
 
     CREATE TABLE IF NOT EXISTS tasks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
       title TEXT NOT NULL,
       type TEXT NOT NULL CHECK(type IN ('daily','project','deadline')),
       pillar_id INTEGER,
@@ -80,12 +91,14 @@ function initDb() {
       completion_reflection TEXT,
       deadline TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES user(id),
       FOREIGN KEY (pillar_id) REFERENCES pillars(id)
     );
 
     CREATE TABLE IF NOT EXISTS weekly_reviews (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      week_start TEXT UNIQUE NOT NULL,
+      user_id INTEGER NOT NULL,
+      week_start TEXT NOT NULL,
       wins TEXT DEFAULT '[]',
       skill_growth TEXT DEFAULT '{}',
       consistency_score INTEGER,
@@ -95,12 +108,15 @@ function initDb() {
       blockers TEXT DEFAULT '[]',
       mood TEXT,
       next_week_intentions TEXT DEFAULT '[]',
-      gratitude TEXT
+      gratitude TEXT,
+      FOREIGN KEY (user_id) REFERENCES user(id),
+      UNIQUE(user_id, week_start)
     );
 
     CREATE TABLE IF NOT EXISTS monthly_reflections (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      month TEXT UNIQUE NOT NULL,
+      user_id INTEGER NOT NULL,
+      month TEXT NOT NULL,
       output_shipped TEXT,
       practice_volume TEXT,
       bottleneck TEXT,
@@ -110,18 +126,23 @@ function initDb() {
       goals_met TEXT DEFAULT '[]',
       habit_summary TEXT,
       biggest_win TEXT,
-      overall_rating INTEGER
+      overall_rating INTEGER,
+      FOREIGN KEY (user_id) REFERENCES user(id),
+      UNIQUE(user_id, month)
     );
 
     CREATE TABLE IF NOT EXISTS weekly_plans (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      week_start TEXT UNIQUE NOT NULL,
+      user_id INTEGER NOT NULL,
+      week_start TEXT NOT NULL,
       objectives TEXT DEFAULT '[]',
       primary_focus TEXT,
       secondary_focus TEXT,
       notes TEXT,
       time_budget TEXT DEFAULT '{}',
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES user(id),
+      UNIQUE(user_id, week_start)
     );
 
     CREATE TABLE IF NOT EXISTS quotes (

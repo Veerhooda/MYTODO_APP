@@ -5,7 +5,7 @@ const { authMiddleware } = require('../middleware/auth');
 const router = express.Router();
 
 // --- Helper: compute weekly stats ---
-function getWeekStats(db, weekStart) {
+function getWeekStats(db, weekStart, userId) {
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 6);
   const endStr = weekEnd.toISOString().split('T')[0];
@@ -13,8 +13,8 @@ function getWeekStats(db, weekStart) {
   const blocks = db.prepare(`
     SELECT tb.*, p.name as pillar_name, p.color as pillar_color
     FROM time_blocks tb LEFT JOIN pillars p ON tb.pillar_id = p.id
-    WHERE tb.date >= ? AND tb.date <= ?
-  `).all(weekStart, endStr);
+    WHERE tb.date >= ? AND tb.date <= ? AND tb.user_id = ?
+  `).all(weekStart, endStr, userId);
 
   const totalBlocks = blocks.length;
   const completed = blocks.filter(b => b.status === 'completed').length;
@@ -34,19 +34,19 @@ function getWeekStats(db, weekStart) {
   const habitLogs = db.prepare(`
     SELECT hl.*, h.name as habit_name FROM habit_logs hl
     JOIN habits h ON hl.habit_id = h.id
-    WHERE hl.date >= ? AND hl.date <= ? AND hl.completed = 1
-  `).all(weekStart, endStr);
+    WHERE hl.date >= ? AND hl.date <= ? AND hl.completed = 1 AND h.user_id = ?
+  `).all(weekStart, endStr, userId);
 
   // Task stats
   const tasksCompleted = db.prepare(`
     SELECT COUNT(*) as count FROM tasks
-    WHERE status = 'completed' AND created_at >= ? AND created_at <= ?
-  `).get(weekStart, endStr + ' 23:59:59');
+    WHERE status = 'completed' AND created_at >= ? AND created_at <= ? AND user_id = ?
+  `).get(weekStart, endStr + ' 23:59:59', userId);
 
   const tasksCreated = db.prepare(`
     SELECT COUNT(*) as count FROM tasks
-    WHERE created_at >= ? AND created_at <= ?
-  `).get(weekStart, endStr + ' 23:59:59');
+    WHERE created_at >= ? AND created_at <= ? AND user_id = ?
+  `).get(weekStart, endStr + ' 23:59:59', userId);
 
   return {
     totalBlocks,
@@ -66,10 +66,10 @@ router.get('/weekly/:weekStart', authMiddleware, (req, res) => {
   const db = getDb();
   const weekStart = req.params.weekStart;
 
-  let review = db.prepare('SELECT * FROM weekly_reviews WHERE week_start = ?').get(weekStart);
+  let review = db.prepare('SELECT * FROM weekly_reviews WHERE week_start = ? AND user_id = ?').get(weekStart, req.userId);
   if (!review) {
-    db.prepare('INSERT INTO weekly_reviews (week_start) VALUES (?)').run(weekStart);
-    review = db.prepare('SELECT * FROM weekly_reviews WHERE week_start = ?').get(weekStart);
+    db.prepare('INSERT INTO weekly_reviews (user_id, week_start) VALUES (?, ?)').run(req.userId, weekStart);
+    review = db.prepare('SELECT * FROM weekly_reviews WHERE week_start = ? AND user_id = ?').get(weekStart, req.userId);
   }
 
   // Parse JSON fields
@@ -80,7 +80,7 @@ router.get('/weekly/:weekStart', authMiddleware, (req, res) => {
   review.next_week_intentions = JSON.parse(review.next_week_intentions || '[]');
 
   // Auto-computed stats
-  const stats = getWeekStats(db, weekStart);
+  const stats = getWeekStats(db, weekStart, req.userId);
 
   res.json({ ...review, stats });
 });
@@ -99,20 +99,20 @@ router.put('/weekly/:weekStart', authMiddleware, (req, res) => {
         wins = ?, skill_growth = ?, consistency_score = ?, energy_reflection = ?,
         adjustment = ?, key_learnings = ?, blockers = ?, mood = ?,
         next_week_intentions = ?, gratitude = ?
-      WHERE week_start = ?
+      WHERE week_start = ? AND user_id = ?
     `).run(
       JSON.stringify(wins || []), JSON.stringify(skill_growth || {}),
       consistency_score, energy_reflection, adjustment,
       JSON.stringify(key_learnings || []), JSON.stringify(blockers || []),
       mood, JSON.stringify(next_week_intentions || []), gratitude,
-      req.params.weekStart
+      req.params.weekStart, req.userId
     );
   } catch {
     // Fallback for old schema
     db.prepare(`
       UPDATE weekly_reviews SET wins = ?, skill_growth = ?, consistency_score = ?, energy_reflection = ?, adjustment = ?
-      WHERE week_start = ?
-    `).run(JSON.stringify(wins || []), JSON.stringify(skill_growth || {}), consistency_score, energy_reflection, adjustment, req.params.weekStart);
+      WHERE week_start = ? AND user_id = ?
+    `).run(JSON.stringify(wins || []), JSON.stringify(skill_growth || {}), consistency_score, energy_reflection, adjustment, req.params.weekStart, req.userId);
   }
 
   res.json({ success: true });
@@ -123,10 +123,10 @@ router.get('/monthly/:month', authMiddleware, (req, res) => {
   const db = getDb();
   const month = req.params.month;
 
-  let reflection = db.prepare('SELECT * FROM monthly_reflections WHERE month = ?').get(month);
+  let reflection = db.prepare('SELECT * FROM monthly_reflections WHERE month = ? AND user_id = ?').get(month, req.userId);
   if (!reflection) {
-    db.prepare('INSERT INTO monthly_reflections (month) VALUES (?)').run(month);
-    reflection = db.prepare('SELECT * FROM monthly_reflections WHERE month = ?').get(month);
+    db.prepare('INSERT INTO monthly_reflections (user_id, month) VALUES (?, ?)').run(req.userId, month);
+    reflection = db.prepare('SELECT * FROM monthly_reflections WHERE month = ? AND user_id = ?').get(month, req.userId);
   }
 
   // Parse JSON
@@ -142,8 +142,8 @@ router.get('/monthly/:month', authMiddleware, (req, res) => {
   const blocks = db.prepare(`
     SELECT tb.*, p.name as pillar_name FROM time_blocks tb
     LEFT JOIN pillars p ON tb.pillar_id = p.id
-    WHERE tb.date >= ? AND tb.date < ?
-  `).all(monthStart, monthEnd);
+    WHERE tb.date >= ? AND tb.date < ? AND tb.user_id = ?
+  `).all(monthStart, monthEnd, req.userId);
 
   const completedBlocks = blocks.filter(b => b.status === 'completed');
   const pillarBreakdown = {};
@@ -155,22 +155,23 @@ router.get('/monthly/:month', authMiddleware, (req, res) => {
   });
 
   const habitsCompleted = db.prepare(`
-    SELECT COUNT(*) as count FROM habit_logs
-    WHERE date >= ? AND date < ? AND completed = 1
-  `).get(monthStart, monthEnd);
+    SELECT COUNT(*) as count FROM habit_logs hl
+    JOIN habits h ON hl.habit_id = h.id
+    WHERE hl.date >= ? AND hl.date < ? AND hl.completed = 1 AND h.user_id = ?
+  `).get(monthStart, monthEnd, req.userId);
 
   const tasksCompleted = db.prepare(
-    `SELECT COUNT(*) as count FROM tasks WHERE status = 'completed' AND created_at >= ? AND created_at < ?`
-  ).get(monthStart, monthEnd);
+    `SELECT COUNT(*) as count FROM tasks WHERE status = 'completed' AND created_at >= ? AND created_at < ? AND user_id = ?`
+  ).get(monthStart, monthEnd, req.userId);
 
   const totalTasks = db.prepare(
-    `SELECT COUNT(*) as count FROM tasks WHERE created_at >= ? AND created_at < ?`
-  ).get(monthStart, monthEnd);
+    `SELECT COUNT(*) as count FROM tasks WHERE created_at >= ? AND created_at < ? AND user_id = ?`
+  ).get(monthStart, monthEnd, req.userId);
 
   // Weekly reviews for this month
   const reviews = db.prepare(`
-    SELECT * FROM weekly_reviews WHERE week_start >= ? AND week_start < ?
-  `).all(monthStart, monthEnd);
+    SELECT * FROM weekly_reviews WHERE week_start >= ? AND week_start < ? AND user_id = ?
+  `).all(monthStart, monthEnd, req.userId);
 
   const avgConsistency = reviews.length > 0
     ? Math.round(reviews.reduce((s, r) => s + (r.consistency_score || 0), 0) / reviews.length)
@@ -208,17 +209,17 @@ router.put('/monthly/:month', authMiddleware, (req, res) => {
         output_shipped = ?, practice_volume = ?, bottleneck = ?,
         strategic_change = ?, next_primary = ?, monthly_goals = ?,
         goals_met = ?, habit_summary = ?, biggest_win = ?, overall_rating = ?
-      WHERE month = ?
+      WHERE month = ? AND user_id = ?
     `).run(
       output_shipped, practice_volume, bottleneck, strategic_change, next_primary,
       JSON.stringify(monthly_goals || []), JSON.stringify(goals_met || []),
-      habit_summary, biggest_win, overall_rating, req.params.month
+      habit_summary, biggest_win, overall_rating, req.params.month, req.userId
     );
   } catch {
     db.prepare(`
       UPDATE monthly_reflections SET output_shipped = ?, practice_volume = ?, bottleneck = ?, strategic_change = ?, next_primary = ?
-      WHERE month = ?
-    `).run(output_shipped, practice_volume, bottleneck, strategic_change, next_primary, req.params.month);
+      WHERE month = ? AND user_id = ?
+    `).run(output_shipped, practice_volume, bottleneck, strategic_change, next_primary, req.params.month, req.userId);
   }
 
   res.json({ success: true });
@@ -231,13 +232,13 @@ router.get('/plan/:weekStart', authMiddleware, (req, res) => {
 
   let plan = null;
   try {
-    plan = db.prepare('SELECT * FROM weekly_plans WHERE week_start = ?').get(weekStart);
+    plan = db.prepare('SELECT * FROM weekly_plans WHERE week_start = ? AND user_id = ?').get(weekStart, req.userId);
   } catch { /* table may not exist yet */ }
 
   if (!plan) {
     try {
-      db.prepare('INSERT INTO weekly_plans (week_start) VALUES (?)').run(weekStart);
-      plan = db.prepare('SELECT * FROM weekly_plans WHERE week_start = ?').get(weekStart);
+      db.prepare('INSERT INTO weekly_plans (user_id, week_start) VALUES (?, ?)').run(req.userId, weekStart);
+      plan = db.prepare('SELECT * FROM weekly_plans WHERE week_start = ? AND user_id = ?').get(weekStart, req.userId);
     } catch {
       plan = { week_start: weekStart, objectives: '[]', notes: '', time_budget: '{}' };
     }
@@ -257,10 +258,10 @@ router.put('/plan/:weekStart', authMiddleware, (req, res) => {
     db.prepare(`
       UPDATE weekly_plans SET
         objectives = ?, primary_focus = ?, secondary_focus = ?, notes = ?, time_budget = ?
-      WHERE week_start = ?
+      WHERE week_start = ? AND user_id = ?
     `).run(
       JSON.stringify(objectives || []), primary_focus, secondary_focus, notes,
-      JSON.stringify(time_budget || {}), req.params.weekStart
+      JSON.stringify(time_budget || {}), req.params.weekStart, req.userId
     );
   } catch { /* graceful fallback */ }
 

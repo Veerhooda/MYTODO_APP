@@ -13,14 +13,15 @@ router.get('/', authMiddleware, (req, res) => {
     SELECT tb.*, p.name as pillar_name, p.color as pillar_color
     FROM time_blocks tb
     LEFT JOIN pillars p ON tb.pillar_id = p.id
+    WHERE tb.user_id = ?
   `;
-  const params = [];
+  const params = [req.userId];
 
   if (start && end) {
-    query += ' WHERE tb.date >= ? AND tb.date <= ?';
+    query += ' AND tb.date >= ? AND tb.date <= ?';
     params.push(start, end);
   } else if (start) {
-    query += ' WHERE tb.date >= ?';
+    query += ' AND tb.date >= ?';
     params.push(start);
   }
 
@@ -35,11 +36,11 @@ router.post('/', authMiddleware, (req, res) => {
   const { date, block_number, pillar_id, task_title, start_time, duration, is_recurring, day_of_week } = req.body;
 
   const result = db.prepare(`
-    INSERT INTO time_blocks (date, block_number, pillar_id, task_title, start_time, duration, is_recurring, day_of_week)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(date, block_number, pillar_id, task_title, start_time, duration, is_recurring ? 1 : 0, day_of_week);
+    INSERT INTO time_blocks (user_id, date, block_number, pillar_id, task_title, start_time, duration, is_recurring, day_of_week)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(req.userId, date, block_number, pillar_id, task_title, start_time, duration, is_recurring ? 1 : 0, day_of_week);
 
-  const block = db.prepare('SELECT * FROM time_blocks WHERE id = ?').get(result.lastInsertRowid);
+  const block = db.prepare('SELECT * FROM time_blocks WHERE id = ? AND user_id = ?').get(result.lastInsertRowid, req.userId);
   res.json(block);
 });
 
@@ -57,15 +58,15 @@ router.put('/:id', authMiddleware, (req, res) => {
         start_time = COALESCE(?, start_time),
         duration = COALESCE(?, duration),
         status = COALESCE(?, status)
-    WHERE id = ?
-  `).run(date, block_number, pillar_id, task_title, start_time, duration, status, req.params.id);
+    WHERE id = ? AND user_id = ?
+  `).run(date, block_number, pillar_id, task_title, start_time, duration, status, req.params.id, req.userId);
 
   const block = db.prepare(`
     SELECT tb.*, p.name as pillar_name, p.color as pillar_color
     FROM time_blocks tb
     LEFT JOIN pillars p ON tb.pillar_id = p.id
-    WHERE tb.id = ?
-  `).get(req.params.id);
+    WHERE tb.id = ? AND tb.user_id = ?
+  `).get(req.params.id, req.userId);
   res.json(block);
 });
 
@@ -74,22 +75,22 @@ router.put('/:id/reschedule', authMiddleware, (req, res) => {
   const db = getDb();
   const { date, start_time } = req.body;
 
-  db.prepare('UPDATE time_blocks SET date = ?, start_time = ? WHERE id = ?')
-    .run(date, start_time, req.params.id);
+  db.prepare('UPDATE time_blocks SET date = ?, start_time = ? WHERE id = ? AND user_id = ?')
+    .run(date, start_time, req.params.id, req.userId);
 
   const block = db.prepare(`
     SELECT tb.*, p.name as pillar_name, p.color as pillar_color
     FROM time_blocks tb
     LEFT JOIN pillars p ON tb.pillar_id = p.id
-    WHERE tb.id = ?
-  `).get(req.params.id);
+    WHERE tb.id = ? AND tb.user_id = ?
+  `).get(req.params.id, req.userId);
   res.json(block);
 });
 
 // Delete block
 router.delete('/:id', authMiddleware, (req, res) => {
   const db = getDb();
-  db.prepare('DELETE FROM time_blocks WHERE id = ?').run(req.params.id);
+  db.prepare('DELETE FROM time_blocks WHERE id = ? AND user_id = ?').run(req.params.id, req.userId);
   res.json({ success: true });
 });
 
@@ -97,7 +98,7 @@ router.delete('/:id', authMiddleware, (req, res) => {
 router.post('/generate', authMiddleware, (req, res) => {
   const db = getDb();
   const { week_start, rotation } = req.body;
-  const pillars = db.prepare('SELECT * FROM pillars').all();
+  const pillars = db.prepare('SELECT * FROM pillars WHERE user_id = ?').all(req.userId);
 
   const getPillarId = (name) => {
     const p = pillars.find(p => p.name === name);
@@ -128,13 +129,13 @@ router.post('/generate', authMiddleware, (req, res) => {
   }
 
   const insert = db.prepare(`
-    INSERT INTO time_blocks (date, block_number, pillar_id, task_title, start_time, duration, is_recurring, day_of_week)
-    VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+    INSERT INTO time_blocks (user_id, date, block_number, pillar_id, task_title, start_time, duration, is_recurring, day_of_week)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
   `);
 
   const insertMany = db.transaction((blocks) => {
     for (const b of blocks) {
-      insert.run(b.date, b.block_number, b.pillar_id, b.task_title, b.start_time, b.duration, b.day_of_week);
+      insert.run(req.userId, b.date, b.block_number, b.pillar_id, b.task_title, b.start_time, b.duration, b.day_of_week);
     }
   });
 

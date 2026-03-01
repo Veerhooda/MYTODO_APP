@@ -11,15 +11,15 @@ router.get('/', authMiddleware, (req, res) => {
   const dayOfWeek = new Date().getDay(); // 0=Sun, 6=Sat
 
   // Get rotation
-  const config = db.prepare('SELECT * FROM rotation_config ORDER BY id DESC LIMIT 1').get();
+  const config = db.prepare('SELECT * FROM rotation_config WHERE user_id = ? ORDER BY id DESC LIMIT 1').get(req.userId);
   let rotation = getCurrentRotation(config.cycle_start_date, today);
 
   // Check academic override
   const tasks = db.prepare(`
     SELECT t.*, p.name as pillar_name FROM tasks t
     LEFT JOIN pillars p ON t.pillar_id = p.id
-    WHERE t.type = 'deadline' AND t.status != 'completed'
-  `).all();
+    WHERE t.type = 'deadline' AND t.status != 'completed' AND t.user_id = ?
+  `).all(req.userId);
   rotation = checkAcademicOverride(tasks, rotation);
 
   if (config.current_override) {
@@ -32,12 +32,12 @@ router.get('/', authMiddleware, (req, res) => {
     SELECT tb.*, p.name as pillar_name, p.color as pillar_color
     FROM time_blocks tb
     LEFT JOIN pillars p ON tb.pillar_id = p.id
-    WHERE tb.date = ?
+    WHERE tb.date = ? AND tb.user_id = ?
     ORDER BY tb.block_number
-  `).all(today);
+  `).all(today, req.userId);
 
   // Streaks for habits
-  const habits = db.prepare('SELECT * FROM habits').all();
+  const habits = db.prepare('SELECT * FROM habits WHERE user_id = ?').all(req.userId);
   const streaks = habits.map(h => {
     const logs = db.prepare(
       'SELECT * FROM habit_logs WHERE habit_id = ? AND completed = 1 ORDER BY date DESC'
@@ -64,10 +64,10 @@ router.get('/', authMiddleware, (req, res) => {
     SELECT t.*, p.name as pillar_name, p.color as pillar_color
     FROM tasks t
     LEFT JOIN pillars p ON t.pillar_id = p.id
-    WHERE t.type = 'deadline' AND t.status != 'completed' AND t.deadline >= ?
+    WHERE t.type = 'deadline' AND t.status != 'completed' AND t.deadline >= ? AND t.user_id = ?
     ORDER BY t.deadline ASC
     LIMIT 5
-  `).all(today);
+  `).all(today, req.userId);
 
   // Weekly quote
   const weekNum = Math.floor((new Date(today).getTime() / (7 * 24 * 60 * 60 * 1000)));
@@ -77,7 +77,7 @@ router.get('/', authMiddleware, (req, res) => {
     db.prepare('SELECT * FROM quotes LIMIT 1').get();
 
   // Pillars
-  const pillars = db.prepare('SELECT * FROM pillars').all();
+  const pillars = db.prepare('SELECT * FROM pillars WHERE user_id = ?').all(req.userId);
 
   res.json({
     rotation,

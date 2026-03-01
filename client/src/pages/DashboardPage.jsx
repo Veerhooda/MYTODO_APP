@@ -3,6 +3,7 @@ import { api } from '../utils/api';
 import { PILLAR_BADGES, PILLAR_SHORT, PILLAR_COLORS } from '../utils/constants';
 import PomodoroTimer from '../components/PomodoroTimer';
 import { Maximize, Clock, Flame, CalendarClock, Activity, Blocks, TrendingUp, Zap, ChevronRight, Quote } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -50,6 +51,7 @@ function SkeletonDashboard() {
 }
 
 export default function DashboardPage({ onFocusMode }) {
+  const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [analyticsData, setAnalyticsData] = useState(null);
@@ -77,7 +79,7 @@ export default function DashboardPage({ onFocusMode }) {
       <div className="greeting-section">
         <LiveClock />
         <div className="greeting-text">
-          {getGreeting()}, <span>Veer</span>
+          {getGreeting()}, <span style={{ textTransform: 'capitalize' }}>{user?.username || 'User'}</span>
         </div>
       </div>
 

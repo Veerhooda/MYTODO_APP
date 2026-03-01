@@ -12,7 +12,8 @@ router.get('/', authMiddleware, (req, res) => {
     SELECT h.*, p.name as pillar_name, p.color as pillar_color
     FROM habits h
     LEFT JOIN pillars p ON h.pillar_id = p.id
-  `).all();
+    WHERE h.user_id = ?
+  `).all(req.userId);
 
   // Get Monday of current week
   const now = new Date();
@@ -69,6 +70,10 @@ router.post('/:id/log', authMiddleware, (req, res) => {
   const { date, done_condition_note } = req.body;
   const logDate = date || new Date().toISOString().split('T')[0];
 
+  // Auth check
+  const habit = db.prepare('SELECT id FROM habits WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
+  if (!habit) return res.status(403).json({ error: 'Unauthorized' });
+
   // Upsert
   const existing = db.prepare('SELECT * FROM habit_logs WHERE habit_id = ? AND date = ?')
     .get(req.params.id, logDate);
@@ -88,6 +93,10 @@ router.delete('/:id/log', authMiddleware, (req, res) => {
   const db = getDb();
   const { date } = req.body;
   const logDate = date || new Date().toISOString().split('T')[0];
+
+  // Auth check
+  const habit = db.prepare('SELECT id FROM habits WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
+  if (!habit) return res.status(403).json({ error: 'Unauthorized' });
 
   db.prepare('DELETE FROM habit_logs WHERE habit_id = ? AND date = ?')
     .run(req.params.id, logDate);

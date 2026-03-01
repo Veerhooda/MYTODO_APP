@@ -12,9 +12,9 @@ router.get('/', authMiddleware, (req, res) => {
     SELECT t.*, p.name as pillar_name, p.color as pillar_color
     FROM tasks t
     LEFT JOIN pillars p ON t.pillar_id = p.id
-    WHERE 1=1
+    WHERE t.user_id = ?
   `;
-  const params = [];
+  const params = [req.userId];
 
   if (type) { query += ' AND t.type = ?'; params.push(type); }
   if (pillar_id) { query += ' AND t.pillar_id = ?'; params.push(pillar_id); }
@@ -30,15 +30,15 @@ router.post('/', authMiddleware, (req, res) => {
   const { title, type, pillar_id, estimated_time, notes, deadline } = req.body;
 
   const result = db.prepare(`
-    INSERT INTO tasks (title, type, pillar_id, estimated_time, notes, deadline)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(title, type, pillar_id, estimated_time, notes, deadline);
+    INSERT INTO tasks (user_id, title, type, pillar_id, estimated_time, notes, deadline)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(req.userId, title, type, pillar_id, estimated_time, notes, deadline);
 
   const task = db.prepare(`
     SELECT t.*, p.name as pillar_name, p.color as pillar_color
     FROM tasks t LEFT JOIN pillars p ON t.pillar_id = p.id
-    WHERE t.id = ?
-  `).get(result.lastInsertRowid);
+    WHERE t.id = ? AND t.user_id = ?
+  `).get(result.lastInsertRowid, req.userId);
   res.json(task);
 });
 
@@ -56,20 +56,20 @@ router.put('/:id', authMiddleware, (req, res) => {
       notes = COALESCE(?, notes),
       completion_reflection = COALESCE(?, completion_reflection),
       deadline = COALESCE(?, deadline)
-    WHERE id = ?
-  `).run(title, type, pillar_id, estimated_time, status, notes, completion_reflection, deadline, req.params.id);
+    WHERE id = ? AND user_id = ?
+  `).run(title, type, pillar_id, estimated_time, status, notes, completion_reflection, deadline, req.params.id, req.userId);
 
   const task = db.prepare(`
     SELECT t.*, p.name as pillar_name, p.color as pillar_color
     FROM tasks t LEFT JOIN pillars p ON t.pillar_id = p.id
-    WHERE t.id = ?
-  `).get(req.params.id);
+    WHERE t.id = ? AND t.user_id = ?
+  `).get(req.params.id, req.userId);
   res.json(task);
 });
 
 router.delete('/:id', authMiddleware, (req, res) => {
   const db = getDb();
-  db.prepare('DELETE FROM tasks WHERE id = ?').run(req.params.id);
+  db.prepare('DELETE FROM tasks WHERE id = ? AND user_id = ?').run(req.params.id, req.userId);
   res.json({ success: true });
 });
 
