@@ -433,28 +433,169 @@ select{appearance:none;background-image:url("data:image/svg+xml;charset=UTF-8,%3
 /* === Apple Mindfulness Focus Mode (Phase 18) === */
 .focus-mode-void{position:fixed;top:0;left:0;right:0;bottom:0;background:#000;z-index:9999;display:flex;align-items:center;justify-content:center;animation:fadeIn 1s var(--ease);overflow:hidden}
 
-.focus-particle{position:absolute;bottom:-10%;width:4px;height:4px;background:#4facfe;border-radius:50%;filter:blur(1.5px);box-shadow:0 0 8px #00f2fe;animation:float-up-fade linear infinite;pointer-events:none;z-index: 1;}
-@keyframes float-up-fade {
-    0% { transform: translateY(0) scale(0.5); opacity: 0; }
-    20% { opacity: 0.8; }
-    80% { opacity: 0.5; }
-    100% { transform: translateY(-120vh) scale(1.5); opacity: 0; }
+/* Ambient mist — always floating in the background */
+.ambient-mist{
+  position:absolute;
+  width:var(--amb-size, 120px);height:var(--amb-size, 120px);
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(0,242,254,0.06) 0%,rgba(79,172,254,0.03) 40%,transparent 70%);
+  filter:blur(25px);
+  pointer-events:none;
+  z-index:1;
+  animation:ambient-drift ease-in-out infinite alternate
 }
+
+@keyframes ambient-drift{
+  0%{transform:translate(0,0) scale(0.8);opacity:0.15}
+  30%{transform:translate(var(--amb-drift-x,40px),calc(var(--amb-drift-y,30px) * -0.5)) scale(1.1);opacity:0.35}
+  60%{transform:translate(calc(var(--amb-drift-x,40px) * -0.7),var(--amb-drift-y,30px)) scale(0.9);opacity:0.25}
+  100%{transform:translate(calc(var(--amb-drift-x,40px) * 0.3),calc(var(--amb-drift-y,30px) * -0.8)) scale(1);opacity:0.3}
+}
+
+.focus-leaf{position:absolute;top:-10%;pointer-events:none;z-index:1;animation:leaf-fall linear infinite;will-change:transform,opacity}
+.focus-leaf svg{animation:leaf-sway ease-in-out infinite alternate,leaf-tumble linear infinite}
+
+@keyframes leaf-fall{
+  0%{transform:translateY(-10vh) translateX(0);opacity:0}
+  3%{opacity:1}
+  50%{transform:translateY(50vh) translateX(calc(var(--leaf-sway, 80px) * 0.6));opacity:var(--leaf-opacity,0.5)}
+  92%{opacity:var(--leaf-opacity,0.3)}
+  100%{transform:translateY(110vh) translateX(var(--leaf-sway, 80px));opacity:0}
+}
+@keyframes leaf-sway{
+  0%{transform:translateX(calc(var(--leaf-sway, 80px) * -0.6)) rotate(var(--leaf-initial-rot, 0deg)) scaleX(0.8)}
+  50%{transform:translateX(0px) rotate(calc(var(--leaf-initial-rot, 0deg) + var(--leaf-rotation, 180deg) * 0.5)) scaleX(1)}
+  100%{transform:translateX(calc(var(--leaf-sway, 80px) * 0.6)) rotate(calc(var(--leaf-initial-rot, 0deg) + var(--leaf-rotation, 180deg))) scaleX(0.8)}
+}
+@keyframes leaf-tumble{
+  0%{filter:brightness(0.7)}
+  25%{filter:brightness(1.3)}
+  50%{filter:brightness(0.8)}
+  75%{filter:brightness(1.2)}
+  100%{filter:brightness(0.7)}
+}
+.focus-leaf svg{animation-duration:var(--leaf-sway-dur, 3s), 6s}
 
 .focus-content-zen{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;z-index:10;width:100%;height:100%}
 
-/* Complex Radial Orb (Phase 18.5) */
-.focus-radial-orb{position:relative;width:500px;height:500px;display:flex;align-items:center;justify-content:center;margin-bottom:0;animation:orb-spin 30s linear infinite}
-.radial-dot{position:absolute;border-radius:50%;background:#00f2fe;box-shadow:inset -2px -2px 10px rgba(0,0,0,0.5),0 0 8px rgba(0,242,254,0.4);mix-blend-mode:screen;opacity:0.4;animation:breathe-dot 8s ease-in-out infinite alternate}
+/* Dancing Peacock Fan (Phase 23.5) */
+.peacock-fan{position:relative;width:500px;height:500px}
 
-@keyframes breathe-dot {
-    0% { transform: translate(calc(var(--x, 0) * 0.4), calc(var(--y, 0) * 0.4)) scale(0.6); opacity: 0; filter: blur(3px) }
-    50% { filter: blur(0px) }
-    100% { transform: translate(var(--x, 0), var(--y, 0)) scale(1.1); opacity: 0.8; filter: blur(1px) }
+/* Mist / dust particles — bloom when feathers vanish */
+.fan-mist{
+  position:absolute;
+  bottom:30%;left:50%;
+  width:var(--mist-size, 50px);height:var(--mist-size, 50px);
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(0,242,254,0.15) 0%,rgba(79,172,254,0.08) 40%,transparent 70%);
+  transform:translate(-50%,50%) rotate(var(--mist-angle,0deg)) translateY(0px) scale(0);
+  filter:blur(12px);
+  opacity:0;
+  pointer-events:none;
+  animation:mist-bloom 10s ease-out infinite;
+  z-index:3
 }
-@keyframes orb-spin {
-    from { transform: rotate(0deg) scale(0.9); }
-    to { transform: rotate(360deg) scale(0.9); }
+
+@keyframes mist-bloom{
+  0%,60%{transform:translate(-50%,50%) rotate(var(--mist-angle,0deg)) translateY(0px) scale(0);opacity:0}
+  68%{transform:translate(-50%,50%) rotate(var(--mist-angle,0deg)) translateY(-60px) scale(0.5);opacity:0.5}
+  75%{transform:translate(-50%,50%) rotate(var(--mist-angle,0deg)) translateY(-130px) scale(1);opacity:0.7}
+  83%{transform:translate(-50%,50%) rotate(var(--mist-angle,0deg)) translateY(-220px) scale(1.5);opacity:0.5;filter:blur(22px)}
+  90%{transform:translate(-50%,50%) rotate(var(--mist-angle,0deg)) translateY(-320px) scale(2.2);opacity:0.2;filter:blur(28px)}
+  96%,100%{transform:translate(-50%,50%) rotate(var(--mist-angle,0deg)) translateY(-400px) scale(3);opacity:0;filter:blur(35px)}
+}
+
+/* Base glow — anchor point at center bottom of the fan */
+.peacock-fan-base{position:absolute;bottom:30%;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,0.9) 0%,rgba(0,242,254,0.5) 45%,transparent 80%);box-shadow:0 0 40px rgba(0,242,254,0.5),0 0 80px rgba(79,172,254,0.25);z-index:5;animation:base-glow 4s ease-in-out infinite alternate}
+
+/* Each feather anchored at the fan base, rotated to its angle, pushed out by radius */
+.peacock-fan-feather{
+  position:absolute;
+  bottom:30%;
+  left:50%;
+  transform:translateX(-50%) rotate(var(--fan-angle,0deg)) translateY(calc(var(--fan-radius,100px) * -1));
+  transform-origin:bottom center;
+  mix-blend-mode:screen;
+  animation:fan-open-close 10s ease-in-out infinite;
+  will-change:transform;
+  opacity:0.6
+}
+
+/* Inner SVG gets the shimmy + jiggle + iridescence (no transform conflict with wrapper) */
+.peacock-fan-feather svg{
+  animation:feather-jiggle 0.35s ease-in-out infinite, feather-iridescence 8s ease-in-out infinite alternate;
+  will-change:transform,filter
+}
+
+/* Feathers emerge from base, fan out, hold display, then fly away into background */
+@keyframes fan-open-close{
+  /* Emerge — feathers grow from the base */
+  0%{
+    transform:translateX(-50%) rotate(0deg) translateY(0px) scale(0);
+    opacity:0
+  }
+  /* Growing outward */
+  12%{
+    transform:translateX(-50%) rotate(calc(var(--fan-angle,0deg) * 0.5)) translateY(calc(var(--fan-radius,100px) * -0.5)) scale(0.6);
+    opacity:0.4
+  }
+  /* Full fan display */
+  25%{
+    transform:translateX(-50%) rotate(var(--fan-angle,0deg)) translateY(calc(var(--fan-radius,100px) * -1)) scale(1);
+    opacity:0.6
+  }
+  /* Hold the display — proud puff */
+  50%{
+    transform:translateX(-50%) rotate(var(--fan-angle,0deg)) translateY(calc(var(--fan-radius,100px) * -1)) scale(1.04);
+    opacity:0.65
+  }
+  /* Start flying outward — feathers detach */
+  65%{
+    transform:translateX(-50%) rotate(calc(var(--fan-angle,0deg) * 1.15)) translateY(calc(var(--fan-radius,100px) * -1.4)) scale(1.1);
+    opacity:0.5
+  }
+  /* Flying further into background */
+  80%{
+    transform:translateX(-50%) rotate(calc(var(--fan-angle,0deg) * 1.3)) translateY(calc(var(--fan-radius,100px) * -2)) scale(0.8);
+    opacity:0.2
+  }
+  /* Gone — faded into background */
+  95%{
+    transform:translateX(-50%) rotate(calc(var(--fan-angle,0deg) * 1.4)) translateY(calc(var(--fan-radius,100px) * -2.5)) scale(0.5);
+    opacity:0
+  }
+  /* Instant reset to base for next cycle */
+  96%{
+    transform:translateX(-50%) rotate(0deg) translateY(0px) scale(0);
+    opacity:0
+  }
+  100%{
+    transform:translateX(-50%) rotate(0deg) translateY(0px) scale(0);
+    opacity:0
+  }
+}
+
+/* Combined shimmy (rotation wobble) + jiggle (vertical bounce + scale pulse) */
+@keyframes feather-jiggle{
+  0%  {transform:rotate(0deg) translateY(0px) scale(1)}
+  15% {transform:rotate(1.8deg) translateY(-3px) scale(1.02)}
+  35% {transform:rotate(-1.2deg) translateY(2px) scale(0.98)}
+  55% {transform:rotate(1.5deg) translateY(-2px) scale(1.01)}
+  75% {transform:rotate(-1.8deg) translateY(3px) scale(0.99)}
+  100%{transform:rotate(0deg) translateY(0px) scale(1)}
+}
+
+@keyframes base-glow{
+  0%{box-shadow:0 0 30px rgba(0,242,254,0.3),0 0 70px rgba(79,172,254,0.15);transform:translateX(-50%) scale(0.9)}
+  100%{box-shadow:0 0 60px rgba(0,242,254,0.6),0 0 120px rgba(79,172,254,0.3),0 0 200px rgba(67,233,123,0.1);transform:translateX(-50%) scale(1.3)}
+}
+
+/* Iridescent color shift on each feather */
+@keyframes feather-iridescence{
+  0%{filter:drop-shadow(0 0 3px rgba(0,242,254,0.2)) brightness(0.85) hue-rotate(0deg)}
+  33%{filter:drop-shadow(0 0 8px rgba(67,233,123,0.3)) brightness(1.15) hue-rotate(20deg)}
+  66%{filter:drop-shadow(0 0 6px rgba(167,139,250,0.25)) brightness(1.05) hue-rotate(-15deg)}
+  100%{filter:drop-shadow(0 0 4px rgba(0,242,254,0.2)) brightness(0.9) hue-rotate(10deg)}
 }
 
 /* Minimalist Typography */
@@ -536,7 +677,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;charset=UTF-8,%3
   .login-visual-side{display:none}
   .quote-block{padding:28px 32px}
   .quote-text{max-width:100%;font-size:1.05rem}
-  .focus-radial-orb{width:400px;height:400px}
+  .peacock-fan{width:400px;height:400px}
 }
 
 /* === Responsive: Mobile (≤768px) === */
@@ -586,7 +727,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;charset=UTF-8,%3
   .burnout-indicator{flex-direction:column;text-align:center;gap:8px;padding:14px 16px}
 
   /* Focus Mode */
-  .focus-radial-orb{width:280px;height:280px}
+  .peacock-fan{width:280px;height:280px}
   .focus-elapsed-zen{font-size:2.2rem}
   .focus-title-minimal{font-size:0.75rem;letter-spacing:0.6em;margin-left:0.6em}
   .focus-typography-shifted{bottom:10%}
@@ -670,7 +811,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;charset=UTF-8,%3
   .pomodoro-presets{display:grid;grid-template-columns:1fr 1fr;gap:6px}
   .pomodoro-preset-btn{font-size:0.6rem;padding:8px 6px}
 
-  .focus-radial-orb{width:200px;height:200px}
+  .peacock-fan{width:200px;height:200px}
   .focus-elapsed-zen{font-size:1.8rem}
   .focus-title-minimal{font-size:0.65rem;letter-spacing:0.4em;margin-left:0.4em}
 
