@@ -4,8 +4,8 @@
   "description": "Backend API server",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node index.js"
+    "start": "PORT=5001 node index.js",
+    "dev": "PORT=5001 node index.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.7.0",

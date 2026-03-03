@@ -118,78 +118,101 @@ export default function HabitsPage() {
         </div>
       </div>
 
-      <div className="grid-2">
+      <div className="grid-3">
         {habits.map((habit, idx) => (
           <div
             key={habit.id}
-            className="habit-card"
-            style={{ animation: `slideUp 0.3s ease ${idx * 0.05}s forwards`, opacity: 0 }}
+            className="habit-card animate-slide-up"
+            style={{ 
+              animationDelay: `${idx * 0.05}s`, 
+              background: 'rgba(20, 18, 16, 0.4)',
+              border: '1px solid var(--border)',
+              borderRadius: '12px',
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
           >
-            <div className="habit-header">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
               <div>
-                <div className="habit-name">{habit.name}</div>
-                <span className={`badge ${PILLAR_BADGES[habit.pillar_name] || ''}`} style={{ marginTop: 6, display: 'inline-block' }}>
-                  {PILLAR_SHORT[habit.pillar_name] || habit.pillar_name}
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>{habit.name}</h3>
+                <span style={{ 
+                  display: 'inline-block', 
+                  marginTop: '6px', 
+                  fontSize: '0.7rem', 
+                  fontWeight: 600, 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.05em', 
+                  color: habit.pillar_color || 'var(--text-muted)' 
+                }}>
+                  {habit.pillar_name || 'General'}
                 </span>
               </div>
-              <div className="flex items-center gap-4">
-                <span className="streak-badge">
-                  <Flame size={13} style={{ color: 'var(--accent-orange)' }} /> {habit.streak}
-                </span>
-                <button className="btn-icon" style={{ width: 28, height: 28, border: 'none', background: 'transparent' }} onClick={() => openManageModal(habit)}>
-                  <Edit3 size={14} />
-                </button>
+              <button 
+                onClick={() => openManageModal(habit)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+              >
+                <Edit3 size={16} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--accent-orange)', fontSize: '0.85rem', fontWeight: 600 }}>
+                <Flame size={14} /> {habit.streak} Day Streak
+              </div>
+              <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--border)' }}></div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                {habit.completedThisWeek} / {habit.target_per_week} this week
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-sm" style={{ marginBottom: 4 }}>
-              <span className="text-muted">
-                {habit.completedThisWeek}/{habit.target_per_week} this week
-              </span>
-              <span className="font-mono" style={{ fontWeight: 600, color: habit.completionRate >= 70 ? 'var(--accent-teal)' : 'var(--text-muted)' }}>
-                {habit.completionRate}%
-              </span>
-            </div>
-
-            <div style={{ height: 4, background: 'var(--bg-tertiary)', borderRadius: 2, marginBottom: 14, overflow: 'hidden' }}>
-              <div style={{
-                width: `${Math.min((habit.completedThisWeek / habit.target_per_week) * 100, 100)}%`,
-                height: '100%',
-                background: habit.pillar_color || 'var(--accent-purple)',
-                borderRadius: 2,
-                transition: 'width 0.5s ease',
-              }} />
-            </div>
-
-            <div className="habit-week-dots">
+            {/* Heat Squares (Github Style) */}
+            <div style={{ display: 'flex', gap: '6px', marginTop: 'auto', marginBottom: '16px' }}>
               {weekDays.map(day => {
                 const log = habit.weekLogs?.find(l => l.date === day.date);
                 const isToday = day.date === today;
+                const isComplete = log?.completed;
+                
                 return (
                   <div
                     key={day.date}
-                    className={`habit-dot ${log?.completed ? 'completed' : ''} ${isToday ? 'today' : ''}`}
-                    title={`${day.label} ${day.date}${log?.done_condition_note ? ': ' + log.done_condition_note : ''}`}
                     onClick={() => {
-                      if (!log?.completed && isToday) {
+                      if (!isComplete && isToday) {
                         setLogModal(habit);
                         setNote('');
                       }
                     }}
+                    title={`${day.label} ${day.date}${log?.done_condition_note ? ': ' + log.done_condition_note : ''}`}
+                    style={{
+                      flex: 1,
+                      aspectRatio: '1/1',
+                      borderRadius: '4px',
+                      background: isComplete ? (habit.pillar_color || 'var(--accent)') : (isToday ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'),
+                      border: isToday && !isComplete ? '1px dashed var(--text-muted)' : '1px solid transparent',
+                      cursor: (isToday && !isComplete) ? 'pointer' : 'default',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: isComplete ? '#000' : 'var(--text-muted)',
+                      transition: 'all 0.2s ease'
+                    }}
                   >
-                    {log?.completed ? <Check size={10} strokeWidth={3} /> : day.label.charAt(0)}
+                    {isComplete ? <Check size={12} strokeWidth={4} /> : (isToday ? <Plus size={12} /> : '')}
                   </div>
                 );
               })}
             </div>
 
-            {habit.completedThisWeek < habit.target_per_week && (
-              <div className="mt-4">
-                <button className="btn btn-primary btn-sm" onClick={() => { setLogModal(habit); setNote(''); }}>
-                  <Check size={13} /> Mark Today
-                </button>
-              </div>
-            )}
+            <button 
+              className="btn btn-primary" 
+              style={{ width: '100%', padding: '10px', fontSize: '0.85rem', justifyContent: 'center', opacity: (habit.completedThisWeek < habit.target_per_week) ? 1 : 0.5 }} 
+              onClick={() => { setLogModal(habit); setNote(''); }}
+              disabled={habit.completedThisWeek >= habit.target_per_week && habit.weekLogs?.find(l => l.date === today)?.completed}
+            >
+              {habit.weekLogs?.find(l => l.date === today)?.completed ? 'Completed Today' : 'Log Activity'}
+            </button>
           </div>
         ))}
       </div>
@@ -243,7 +266,7 @@ export default function HabitsPage() {
                 <div className="flex" style={{ gap: 4, flexWrap: 'wrap' }}>
                   {[1,2,3,4,5,6,7].map(x => (
                     <button key={x} className={`btn btn-sm ${form.target_per_week === x ? 'btn-primary' : 'btn-secondary'}`}
-                      onClick={() => setForm({ ...form, target_per_week: x })} style={{ minWidth: 28, padding: '4px 6px' }}>
+                      onClick={() => setForm({ ...form, target_per_week: x })} style={{ minWidth: 28, padding: '4px 6px', borderRadius: '6px' }}>
                       {x}
                     </button>
                   ))}

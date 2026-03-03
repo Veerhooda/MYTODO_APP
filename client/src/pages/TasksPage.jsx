@@ -152,53 +152,70 @@ export default function TasksPage() {
         ))}
       </div>
 
-      <div className="flex flex-col" style={{ gap: 8 }}>
-        {filtered.length === 0 && <p className="text-muted text-sm">No tasks match your filters.</p>}
+      <div className="tasks-grid mb-6">
+        {filtered.length === 0 && <p className="text-muted text-sm" style={{ gridColumn: '1 / -1' }}>No tasks match your filters.</p>}
         {filtered.map((task, i) => (
-          <div key={task.id} className="card" style={{ padding: '14px 22px', animation: `slideUp 0.25s ease ${i * 0.03}s forwards`, opacity: 0 }}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center" style={{ gap: 10, flexWrap: 'wrap' }}>
-                <span className={`badge badge-status-${task.status}`}>
-                  <StatusIcon status={task.status} /> {task.status.replace('_', ' ')}
-                </span>
-                <span style={{ fontWeight: 600 }}>{task.title}</span>
-                {task.pillar_name && (
-                  <span className={`badge ${PILLAR_BADGES[task.pillar_name] || ''}`}>{PILLAR_SHORT[task.pillar_name]}</span>
-                )}
-                <span className="text-sm text-muted">{task.type}</span>
-                {task.deadline && (
-                  <span className="text-sm font-mono" style={{ color: 'var(--accent-red)', display: 'flex', alignItems: 'center', gap: 3 }}>
-                    <AlertCircle size={11} /> {task.deadline}
-                  </span>
-                )}
-                {task.estimated_time && (
-                  <span className="text-sm text-muted font-mono" style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                    <Clock size={11} /> {task.estimated_time}m
-                  </span>
-                )}
-              </div>
-              <div className="flex" style={{ gap: 4, flexShrink: 0 }}>
+          <div key={task.id} className="card" style={{ padding: '16px 20px', animation: `slideUp 0.35s ease ${i * 0.05}s forwards`, opacity: 0 }}>
+            {/* Top row: Badges and Title */}
+            <div className="flex items-center justify-between mb-3">
+              <span className={`badge badge-status-${task.status}`}>
+                <StatusIcon status={task.status} /> {task.status.replace('_', ' ')}
+              </span>
+              <div className="flex" style={{ gap: 4 }}>
                 {task.status !== 'completed' && (
-                  <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-teal)' }}
-                    onClick={() => { setReflectionModal(task); setReflection(''); }}>
+                  <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-teal)', padding: '4px 8px' }}
+                    onClick={() => { setReflectionModal(task); setReflection(''); }}
+                    title="Mark Complete">
                     <Check size={14} />
                   </button>
                 )}
-                <button className="btn btn-ghost btn-sm" onClick={() => openEdit(task)}>
+                <button className="btn btn-ghost btn-sm" style={{ padding: '4px 8px' }} onClick={() => openEdit(task)} title="Edit">
                   <Edit3 size={13} />
                 </button>
-                <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-red)' }}
-                  onClick={() => handleDelete(task.id)}>
+                <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-red)', padding: '4px 8px' }}
+                  onClick={() => handleDelete(task.id)} title="Delete">
                   <X size={14} />
                 </button>
               </div>
             </div>
-            {task.notes && <p className="text-sm text-muted mt-4" style={{ paddingLeft: 4 }}>{task.notes}</p>}
-            {task.completion_reflection && (
-              <p className="text-sm mt-4" style={{ color: 'var(--accent-teal)', paddingLeft: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <Lightbulb size={12} /> {task.completion_reflection}
-              </p>
-            )}
+
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>
+              {task.title}
+            </h3>
+
+            {/* Meta tags wrapping properly below title */}
+            <div className="flex flex-wrap" style={{ gap: 8, marginBottom: 16 }}>
+              {task.pillar_name && (
+                <span className={`badge ${PILLAR_BADGES[task.pillar_name] || ''}`}>{PILLAR_SHORT[task.pillar_name]}</span>
+              )}
+              <span className="badge" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>{task.type}</span>
+              
+              {task.deadline && (
+                <span className="badge" style={{ background: 'rgba(245,119,153,0.1)', color: 'var(--accent-red)' }}>
+                  <AlertCircle size={11} strokeWidth={2.5} /> {task.deadline}
+                </span>
+              )}
+              {task.estimated_time && (
+                <span className="badge" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>
+                  <Clock size={11} strokeWidth={2.5} /> {task.estimated_time}m
+                </span>
+              )}
+            </div>
+
+            {/* Content that stretches (Notes & Reflections) */}
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {task.notes && (
+                <div style={{ background: 'rgba(255,247,205,0.03)', padding: '10px 12px', borderRadius: 'var(--r-md)', border: '1px solid var(--border)', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  {task.notes}
+                </div>
+              )}
+              {task.completion_reflection && (
+                <div style={{ background: 'rgba(11,214,161,0.08)', padding: '10px 12px', borderRadius: 'var(--r-md)', border: '1px solid rgba(11,214,161,0.15)', fontSize: '0.85rem', color: 'var(--accent-teal)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <Lightbulb size={14} style={{ marginTop: 2, flexShrink: 0 }} /> 
+                  <span>{task.completion_reflection}</span>
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>

@@ -75,13 +75,20 @@ export default function DashboardPage({ onFocusMode }) {
   const weekLabel = rotation.label || '?';
 
   return (
-    <div>
-      {/* Greeting */}
-      <div className="greeting-section">
-        <LiveClock />
-        <div className="greeting-text">
-          {getGreeting()}, <span style={{ textTransform: 'capitalize' }}>{user?.username || 'User'}</span>
+    <div className="animate-slide-up" style={{ position: 'relative', zIndex: 1 }}>
+
+
+      {/* Greeting & Focus */}
+      <div className="greeting-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <LiveClock />
+          <div className="greeting-text">
+            {getGreeting()}, <span style={{ textTransform: 'capitalize' }}>{user?.username || 'User'}</span>
+          </div>
         </div>
+        <button className="btn btn-focus-glorified" onClick={onFocusMode}>
+          <Maximize size={16} /> Enter Focus Mode
+        </button>
       </div>
 
       {isSunday && (
@@ -155,7 +162,7 @@ export default function DashboardPage({ onFocusMode }) {
                   key={block.id}
                   className={`time-block-card ${block.status}`}
                   style={{
-                    borderLeftColor: block.pillar_color || '#FB9B8F',
+                    '--block-color': block.pillar_color || 'var(--accent)',
                     animationDelay: `${i * 0.05}s`,
                     animation: 'slideIn 0.3s ease forwards',
                     opacity: 0,
@@ -168,9 +175,6 @@ export default function DashboardPage({ onFocusMode }) {
                 </div>
               ))
             )}
-            <button className="btn btn-ghost btn-sm mt-4" onClick={onFocusMode} style={{ color: 'var(--accent-purple)' }}>
-              <Maximize size={13} /> Enter Focus Mode
-            </button>
           </div>
 
           <div className="grid-2" style={{ gap: 16 }}>
