@@ -1,8 +1,8 @@
 export const PILLAR_COLORS = {
-  'Competitive Programming': '#6c63ff',
-  'Systems': '#00d4aa',
-  'Development': '#ff9f43',
-  'Academics': '#ff6b6b',
+  'Competitive Programming': '#FB9B8F',
+  'Systems': '#FDC3A1',
+  'Development': '#FFF7CD',
+  'Academics': '#F57799',
 };
 
 export const PILLAR_BADGES = {

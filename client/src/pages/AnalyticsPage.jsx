@@ -91,7 +91,7 @@ export default function AnalyticsPage() {
             size={140}
             stroke={12}
             progress={deepWorkPct || 0}
-            color={deepWorkPct >= 70 ? '#00e4b8' : deepWorkPct >= 40 ? '#ffaa55' : '#ff5c6c'}
+            color={deepWorkPct >= 70 ? '#FDC3A1' : deepWorkPct >= 40 ? '#FFF7CD' : '#F57799'}
           />
           <p className="text-sm text-muted">
             {deepWorkPct >= 70 ? 'Excellent focus — keep this up!' : deepWorkPct >= 40 ? 'Decent but room for improvement' : 'Focus needs attention this week'}

@@ -31,8 +31,8 @@ export default function Sidebar({ isOpen, onClose, onCommandPalette }) {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#brandGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <defs>
               <linearGradient id="brandGrad" x1="0" y1="0" x2="24" y2="24">
-                <stop offset="0%" stopColor="#7c6fff" />
-                <stop offset="100%" stopColor="#00e4b8" />
+                <stop offset="0%" stopColor="#FB9B8F" />
+                <stop offset="100%" stopColor="#FDC3A1" />
               </linearGradient>
             </defs>
             <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" />

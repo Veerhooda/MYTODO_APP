@@ -5,7 +5,7 @@ import ProgressRing from '../components/ProgressRing';
 import { Target, Save, Clock, Sparkles, CheckSquare, TrendingUp, Trophy, Star, Package, ShieldAlert, ArrowRight, BarChart3, Check, Plus } from 'lucide-react';
 
 const PILLAR_NAMES = ['Competitive Programming', 'Systems', 'Development', 'Academics'];
-const PILLAR_COLORS = { 'Competitive Programming': '#7c6fff', Systems: '#00e4b8', Development: '#ffaa55', Academics: '#ff5c6c' };
+const PILLAR_COLORS = { 'Competitive Programming': '#FB9B8F', Systems: '#FDC3A1', Development: '#FFF7CD', Academics: '#F57799' };
 const BOTTLENECKS = ['Time management', 'Procrastination', 'Unclear priorities', 'Low energy', 'Distractions', 'Skill gaps', 'Over-commitment', 'Other'];
 const RATINGS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -103,7 +103,7 @@ export default function MonthlyReflectionPage() {
         <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 32, animation: 'slideUp 0.35s ease' }}>
           <ProgressRing size={110} stroke={10}
             progress={stats.completionRate || 0}
-            color={stats.completionRate >= 70 ? '#00e4b8' : stats.completionRate >= 40 ? '#ffaa55' : '#ff5c6c'}
+            color={stats.completionRate >= 70 ? '#FDC3A1' : stats.completionRate >= 40 ? '#FFF7CD' : '#F57799'}
           />
           <div>
             <h3 style={{ marginBottom: 4 }}>Monthly Performance</h3>

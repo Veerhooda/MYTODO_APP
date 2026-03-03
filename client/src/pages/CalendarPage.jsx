@@ -207,7 +207,7 @@ export default function CalendarPage() {
                     {cellBlocks.map(block => (
                       <div key={block.id}
                         className={`time-block-card ${block.status}`}
-                        style={{ borderLeftColor: block.pillar_color || '#7c6fff', marginBottom: view === 'day' ? 12 : 6 }}
+                        style={{ borderLeftColor: block.pillar_color || '#FB9B8F', marginBottom: view === 'day' ? 12 : 6 }}
                         draggable
                         onDragStart={(e) => handleDragStart(e, block)}
                         onClick={(e) => { e.stopPropagation(); toggleStatus(block); }}

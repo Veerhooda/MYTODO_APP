@@ -109,7 +109,7 @@ export default function WeeklyReviewPage() {
         <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 32, animation: 'slideUp 0.35s ease' }}>
           <ProgressRing size={100} stroke={8}
             progress={stats.completionRate || 0}
-            color={stats.completionRate >= 70 ? '#00e4b8' : stats.completionRate >= 40 ? '#ffaa55' : '#ff5c6c'}
+            color={stats.completionRate >= 70 ? '#FDC3A1' : stats.completionRate >= 40 ? '#FFF7CD' : '#F57799'}
           />
           <div>
             <h3 style={{ marginBottom: 4 }}>Block Completion</h3>

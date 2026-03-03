@@ -85,8 +85,8 @@ export default function DashboardPage({ onFocusMode }) {
       </div>
 
       {isSunday && (
-        <div className="burnout-indicator risk mb-6" style={{ background: 'linear-gradient(135deg, rgba(124,111,255,0.1), rgba(124,111,255,0.03))', borderColor: 'rgba(124,111,255,0.25)' }}>
-          <div className="burnout-dot" style={{ background: 'var(--accent-purple)' }} />
+        <div className="burnout-indicator risk mb-6" style={{ background: 'linear-gradient(135deg, rgba(251,155,143,0.1), rgba(251,155,143,0.03))', borderColor: 'rgba(251,155,143,0.25)' }}>
+          <div className="burnout-dot" style={{ background: 'var(--accent)' }} />
           <div>
             <span style={{ color: 'var(--accent-purple-bright)', fontWeight: 700 }}>Sunday — Weekly Review Mode Active</span>
             <div className="text-sm text-muted">Head to the Weekly Review page to reflect on your progress.</div>
@@ -155,7 +155,7 @@ export default function DashboardPage({ onFocusMode }) {
                   key={block.id}
                   className={`time-block-card ${block.status}`}
                   style={{
-                    borderLeftColor: block.pillar_color || '#7c6fff',
+                    borderLeftColor: block.pillar_color || '#FB9B8F',
                     animationDelay: `${i * 0.05}s`,
                     animation: 'slideIn 0.3s ease forwards',
                     opacity: 0,
