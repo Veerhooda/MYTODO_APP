@@ -1,1 +1,30 @@
-# test
+# This file is in the wrong location - see .github/workflows/ci.yml
+# Please manually move this file to .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm ci
+        working-directory: client
+      - run: npm ci
+        working-directory: server
+      - run: npm run lint --if-present
+        working-directory: client
+      - run: npm run build --if-present
+        working-directory: client
+      - run: npm run lint --if-present
+        working-directory: server
