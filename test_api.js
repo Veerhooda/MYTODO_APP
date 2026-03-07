@@ -1,8 +1,8 @@
 const http = require('http');
 
 const payload = JSON.stringify({
-  username: "veer",
-  password: "password123"
+  username: process.env.TEST_USERNAME,
+  password: process.env.TEST_PASSWORD
 });
 
 const req = http.request({
