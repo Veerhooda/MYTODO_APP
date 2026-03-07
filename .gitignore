@@ -5,3 +5,7 @@ server/db/*.db-wal
 server/.env
 client/dist/
 .DS_Store
+
+# Lighthouse reports
+client/lighthouse-*.json
+lighthouse-*.json
